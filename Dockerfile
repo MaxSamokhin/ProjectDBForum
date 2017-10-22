@@ -37,4 +37,4 @@ RUN mvn package
 
 EXPOSE 5000
 
-CMD service postgresql start && java -Xmx300M -Xmx300M -jar $WORK/forumDB-api/target/ProjectDBForum-1.0-SNAPSHOT.jar
+CMD service postgresql start && java -Xmx300M -Xmx300M -jar $WORK/forumDB-api/target/db-project-1.0-SNAPSHOT.jar
