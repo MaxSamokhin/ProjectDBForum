@@ -1,11 +1,11 @@
 CREATE EXTENSION IF NOT EXISTS CITEXT;
 
-DROP TABLE IF EXISTS Forum CASCADE;
-DROP TABLE IF EXISTS Posts CASCADE;
-DROP TABLE IF EXISTS Thread CASCADE;
-DROP TABLE IF EXISTS Users CASCADE;
-DROP TABLE IF EXISTS Vote CASCADE;
-DROP TABLE IF EXISTS Votes CASCADE;
+-- DROP TABLE IF EXISTS Forum CASCADE;
+-- DROP TABLE IF EXISTS Posts CASCADE;
+-- DROP TABLE IF EXISTS Thread CASCADE;
+-- DROP TABLE IF EXISTS Users CASCADE;
+-- DROP TABLE IF EXISTS Vote CASCADE;
+-- DROP TABLE IF EXISTS Votes CASCADE;
 
 CREATE TABLE IF NOT EXISTS Users (
   id       SERIAL PRIMARY KEY,
@@ -15,8 +15,10 @@ CREATE TABLE IF NOT EXISTS Users (
   about    TEXT
 );
 
-CREATE INDEX IF NOT EXISTS user_nickname_index
+CREATE UNIQUE INDEX IF NOT EXISTS user_nickname_index
   ON Users (nickname);
+CREATE UNIQUE INDEX IF NOT EXISTS user_email_index
+  ON Users (email);
 
 CREATE TABLE IF NOT EXISTS Forum (
   id      SERIAL PRIMARY KEY,
@@ -28,7 +30,7 @@ CREATE TABLE IF NOT EXISTS Forum (
 );
 
 
-CREATE INDEX IF NOT EXISTS forum_slug_index
+CREATE UNIQUE INDEX IF NOT EXISTS forum_slug_index
   ON Forum (slug);
 CREATE INDEX IF NOT EXISTS forum_user_id_index
   ON Forum (user_id);
@@ -49,7 +51,7 @@ CREATE INDEX IF NOT EXISTS thread_author_id_index
   ON Thread (author_id);
 CREATE INDEX IF NOT EXISTS thread_forum_id_index
   ON Thread (forum_id);
-CREATE INDEX IF NOT EXISTS thread_slug_index
+CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
   ON Thread (slug);
 
 CREATE TABLE IF NOT EXISTS Posts (
@@ -73,8 +75,10 @@ CREATE INDEX IF NOT EXISTS post_thread_id_index
   ON Posts (thread_id);
 CREATE INDEX IF NOT EXISTS post_parent_index
   ON Posts (parent);
-
-
+CREATE INDEX IF NOT EXISTS post_path_index
+  ON Posts ((path [1]));
+CREATE INDEX IF NOT EXISTS post_thread_id_parent on posts(thread_id, parent);
+CREATE INDEX if NOT EXISTS post_id_thread_id_index on posts(id, thread_id);
 
 CREATE TABLE IF NOT EXISTS Vote (
   user_id   INTEGER NOT NULL REFERENCES Users (id),

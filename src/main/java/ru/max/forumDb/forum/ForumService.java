@@ -3,6 +3,7 @@ package ru.max.forumDb.forum;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.thread.ThreadModel;
@@ -13,8 +14,8 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Objects;
 
-@Service
 @Transactional
+@Repository
 public class ForumService {
 
     private final JdbcTemplate jdbcTmp;
@@ -149,8 +150,8 @@ public class ForumService {
     public ThreadModel getThread(String slug) {
         final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
                 "from Thread " +
-                "join Users on Thread.author_id = Users.id " +
                 "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
                 "where Thread.slug = ?::citext;";
 
         return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(
@@ -167,8 +168,8 @@ public class ForumService {
     public ThreadModel getThreadById(int id) {
         final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
                 "from Thread " +
-                "join Users on Thread.author_id = Users.id " +
                 "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
                 "where Thread.id = ?::citext;";
 
         return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(

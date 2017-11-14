@@ -5,6 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.forum.ForumModel;
@@ -18,8 +19,8 @@ import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-@Service
 @Transactional
+@Repository
 public class ThreadService {
 
     private final JdbcTemplate jdbcTmp;
@@ -73,8 +74,8 @@ public class ThreadService {
                                 "select Posts.id, Posts.parent, Users.nickname, Posts.message, " +
                                         " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
                                         " from Posts " +
-                                        " join Users on Posts.author = Users.id " +
                                         " join Forum on Posts.forum_id = Forum.id " +
+                                        " join Users on Posts.author = Users.id " +
                                         " where Posts.id=? and Posts.thread_id=?", (rs, rowNum) -> new PostModel(
                                         rs.getInt("id"),
                                         rs.getInt("parent"),
@@ -242,10 +243,11 @@ public class ThreadService {
 
         String sql = sub + "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited," +
                 " Forum.slug, Posts.thread_id, Posts.created from Posts " +
-                " join Users on Posts.author = Users.id " +
                 " join Forum on Posts.forum_id = Forum.id " +
+                " join Users on Posts.author = Users.id " +
                 " join sub on sub.path <@ Posts.path " +
                 "order by Posts.path " + sqlSort;
+
 
 //                "where Posts.thread_id=? ";
 //
@@ -277,8 +279,8 @@ public class ThreadService {
         //limit 65 since -1 desc true
         String sql = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
-                " join Users on Posts.author = Users.id " +
-                " join Forum on Posts.forum_id = Forum.id ";
+                " join Forum on Posts.forum_id = Forum.id " +
+                " join Users on Posts.author = Users.id ";
                 if (since != -1) {
                     sql += " where (Posts.thread_id = ? and Posts.id " + sign +" "+ since + " ) ";
                 } else {
@@ -307,9 +309,12 @@ public class ThreadService {
 
         String sql = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
-                "join Users on posts.author = Users.id " +
-                "join Forum on posts.forum_id = Forum.id " +
+                " join Forum on Posts.forum_id = Forum.id " +
+                " join Users on Posts.author = Users.id " +
                 " WHERE  Posts.thread_id = ? ";
+
+
+
 
         if (since != -1) {
             sql += " and Posts.path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
@@ -330,8 +335,8 @@ public class ThreadService {
     public ThreadModel getThreadIdOrSlug(int id, String slugOrId) {
         final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
                 "from Thread " +
-                "join Users on Thread.author_id = Users.id " +
                 "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
                 "where Thread.id = ? or Thread.slug=?::citext;";
 
         return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(

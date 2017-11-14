@@ -2,6 +2,7 @@ package ru.max.forumDb.post;
 
 import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.Message;
@@ -12,8 +13,8 @@ import ru.max.forumDb.user.UserModel;
 import java.sql.Timestamp;
 import java.util.Arrays;
 
-@Service
 @Transactional
+@Repository
 public class PostService {
     private final JdbcTemplate jdbcTmp;
 
@@ -26,20 +27,21 @@ public class PostService {
 
         String sqlFindPostById = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
-                "join Users on Posts.author = Users.id " +
                 "join Forum on Posts.forum_id = Forum.id " +
+                "join Users on Posts.author = Users.id " +
                 "where Posts.id=?;";
         String sqlFindUserById = "select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
                 "from Posts join Users on Posts.author = Users.id " +
                 "where Posts.id=?;";
         String sqlFindForumById = "select Forum.id, Forum.title, Forum.slug, Users.nickname, Forum.posts, Forum.threads " +
-                "from Posts join Forum on Posts.forum_id = Forum.id " +
+                "from Posts " +
+                "join Forum on Posts.forum_id = Forum.id " +
                 "join Users on Forum.user_id = Users.id " +
                 "where Posts.id=?;";
         String sqlFindThreadById = "select Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, " +
                 "Thread.votes, Thread.slug as t_slug, Thread.created from Thread " +
-                "join Users on Thread.author_id = Users.id " +
                 "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
                 "join Posts on Posts.thread_id = Thread.id " +
                 "where Posts.id=?;";
 
@@ -103,8 +105,8 @@ public class PostService {
 
         String sqlFindPostById = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
-                "join Users on Posts.author = Users.id " +
                 "join Forum on Posts.forum_id = Forum.id " +
+                "join Users on Posts.author = Users.id " +
                 "where Posts.id=?;";
 
         String sqlUpdatePost = "update Posts set ( message, is_edited ) = (?, ?) " +
