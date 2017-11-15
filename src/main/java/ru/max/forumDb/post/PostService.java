@@ -57,8 +57,6 @@ public class PostService {
 
         jsonObject.put("post", post.getJson());
 
-        System.out.println("i am work 1");
-
         if (related != null && related.contains("user")) {
             UserModel user = jdbcTmp.queryForObject(sqlFindUserById, (rs, rowNum) -> new UserModel(
                     rs.getInt("id"),
@@ -69,8 +67,6 @@ public class PostService {
 
             jsonObject.put("author", user.getJsonWithoutId());
         }
-
-        System.out.println("i am work 2");
 
         if (related != null && related.contains("thread")) {
             ThreadModel thread = jdbcTmp.queryForObject(sqlFindThreadById, (rs, rowNum) -> new ThreadModel(
@@ -133,8 +129,6 @@ public class PostService {
 
             jdbcTmp.update(sqlUpdatePost, msg.getMessage(),post.isEdited(), id);
         }
-
-        System.out.println("time:" + post.getCreated());
 
         return post;
     }

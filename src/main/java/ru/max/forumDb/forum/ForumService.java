@@ -81,7 +81,6 @@ public class ForumService {
                 "from Forum join Users on Forum.user_id = Users.id " +
                 "where Forum.slug = ?::citext";
 
-        System.out.println("111111");
 
         ForumModel forum = jdbcTmp.queryForObject(sqlGetForum, (rs, rowNum) -> new ForumModel(
                 rs.getLong("id"),
@@ -97,8 +96,6 @@ public class ForumService {
         }
 
         final String sqlGetUser = "select id, nickname, fullname, about, email from Users where nickname = ?::citext ;";
-
-        System.out.println("222222");
 
         UserModel user = jdbcTmp.queryForObject(sqlGetUser, (rs, rowNum) -> new UserModel(
                 rs.getInt("id"),
@@ -122,13 +119,6 @@ public class ForumService {
 
         String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?::citext";
 
-        System.out.println("33333333");
-        System.out.println(threadUpdrate.getTitle() + " ");
-        System.out.println(user.getId() + " " + forum.getId() + " ");
-        System.out.println(threadUpdrate.getMessage() + " ");
-        System.out.println(threadUpdrate.getCreated() + " ");
-        System.out.println("slug: " + threadUpdrate.getSlug());
-
 //        jdbcTmp.update(sqlInsertIntoThread, threadUpdrate.getTitle(), user.getId(), forum.getId(), threadUpdrate.getMessage(), threadUpdrate.getCreated(), threadUpdrate.getSlug());
 
         threadUpdrate.setForum(forum.getSlug());
@@ -136,11 +126,9 @@ public class ForumService {
         threadUpdrate.setId(jdbcTmp.queryForObject(sqlInsertIntoThread, Integer.class, threadUpdrate.getTitle(), user.getId(),
                 forum.getId(), threadUpdrate.getMessage(), threadUpdrate.getCreated(), threadUpdrate.getSlug()));
 
-        System.out.println("4444444");
 
         jdbcTmp.update(sqlUpdate, forum.getSlug());
 
-        System.out.println("5555555");
 //        int  thread_id = jdbcTmp.queryForObject(sql, Integer.class, threadUpdrate.getTitle(), threadUpdrate.getSlug());
 
         return threadUpdrate;
@@ -237,7 +225,6 @@ public class ForumService {
         }
 
         Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-        System.out.println(forId);
         return jdbcTmp.query(sql, (rs, rowNum) -> new ThreadModel(
                 rs.getInt("id"),
                 rs.getString("title"),

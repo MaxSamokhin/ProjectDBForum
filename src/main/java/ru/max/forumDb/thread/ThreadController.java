@@ -41,8 +41,6 @@ public class ThreadController {
 
             ThreadModel thread = threadService.getThreadIdOrSlug(id, slugOrId);
 
-            System.out.println(thread.getJson().toString());
-
             List<PostModel> posts = threadService.createPosts(thread, listPosts);
 
 
@@ -151,11 +149,8 @@ public class ThreadController {
 
             if (Objects.equals(sort, "flat")) {
 
-                System.out.println(thread.getJson().toString());
                 posts = threadService.getPostsFlat(thread, limit, since, desc);
 
-
-                System.out.println(posts.size());
                 final JSONArray result = new JSONArray();
                 for (PostModel pst : posts) {
                     result.put(pst.getJson());

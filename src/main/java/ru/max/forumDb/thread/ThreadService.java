@@ -188,22 +188,17 @@ public class ThreadService {
 //            throw new EmptyResultDataAccessException(1);
         }
 
-        System.out.println("11111111");
-
         if (realVote == null) {
 
             String sqlInsert = "INSERT INTO vote (user_id, thread_id, voice) " +
                     "VALUES ((SELECT id FROM users WHERE nickname = ?::citext), ?, ?);";
 
             jdbcTmp.update(sqlInsert, vote.getNickname(), thread.getId(), vote.getVoice());
-            System.out.println("2222222");
 
             String sqlUpdrate = "UPDATE thread SET votes = (SELECT SUM(voice) FROM vote " +
                     "WHERE thread_id = ?) where thread.id=? RETURNING votes;";
 
             int votes = jdbcTmp.queryForObject(sqlUpdrate, Integer.class, thread.getId(), thread.getId());
-
-            System.out.println("3333333");
 
             thread.setVotes(votes);
 
@@ -214,14 +209,10 @@ public class ThreadService {
 
             jdbcTmp.update(sqlUpdrateVote, vote.getVoice(), vote.getNickname(), thread.getId());
 
-            System.out.println("2222222");
-
             String sqlGetVotes = "UPDATE thread SET votes = (SELECT SUM(voice) FROM vote " +
                     "WHERE thread_id = ?) where thread.id=? RETURNING votes;";
 
             int votes = jdbcTmp.queryForObject(sqlGetVotes, Integer.class, thread.getId(), thread.getId());
-
-            System.out.println("3333333");
 
             thread.setVotes(votes);
         }
@@ -287,8 +278,6 @@ public class ThreadService {
                     sql += "where Posts.thread_id = ? ";
                 }
                 sql += "order by  Posts.created " + sqlSort + ",  Posts.id  " + sqlSort + " limit ? ;";
-
-        System.out.println(limit + " " + since + " " + desc);
 
         return jdbcTmp.query(sql, (rs, rowNum) -> new PostModel(
                 rs.getInt("id"),

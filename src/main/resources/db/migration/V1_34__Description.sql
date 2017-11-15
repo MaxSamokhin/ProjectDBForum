@@ -77,8 +77,10 @@ CREATE INDEX IF NOT EXISTS post_parent_index
   ON Posts (parent);
 CREATE INDEX IF NOT EXISTS post_path_index
   ON Posts ((path [1]));
-CREATE INDEX IF NOT EXISTS post_thread_id_parent on posts(thread_id, parent);
-CREATE INDEX if NOT EXISTS post_id_thread_id_index on posts(id, thread_id);
+CREATE INDEX IF NOT EXISTS post_thread_id_parent
+  ON posts (thread_id, parent);
+CREATE INDEX IF NOT EXISTS post_id_thread_id_index
+  ON posts (id, thread_id);
 
 CREATE TABLE IF NOT EXISTS Vote (
   user_id   INTEGER NOT NULL REFERENCES Users (id),

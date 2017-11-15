@@ -105,7 +105,6 @@ public class ForumController {
                                              @RequestParam(value = "since", required = false) String since,
                                              @RequestParam(value = "desc", required = false, defaultValue = "false") boolean desc) {
         try {
-            System.out.println(slug + " "+ limit+ " "+since+ " "+desc);
             final List<ThreadModel> threads = forumService.getThreadsForum(slug, limit, since, desc);
 
             final JSONArray result = new JSONArray();
