@@ -33,31 +33,14 @@ public class ThreadService {
         this.userService = userService;
     }
 
-    //100% не рабочая херня
     public List<PostModel> createPosts(ThreadModel thread, List<PostModel> listPosts) throws SQLException {
-        String sql = "insert into Posts (id, parent, author, message, forum_id, thread_id, created, path ) " +
-                "values (?, ?,(select Users.id from Users where Users.nickname=?),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?)";
+        String sql = "insert into Posts (id, parent, author, message, forum_id, thread_id, created, path, nickname ) " +
+                "values (?, ?,(select Users.id from Users where Users.nickname=?),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?)";
 
         Timestamp nowTime = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
 
         int threadId = thread.getId();
 
-//        String sqlHaveParent = "select * from posts where id=? and thread_id=?";
-
-//        String sqlParent = "select count(id) from posts where thread_id=? and parent=0";
-//
-//        int flagParent = jdbcTmp.queryForObject(sqlParent, Integer.class, thread.getId());
-//
-//        if (flagParent == 0) {
-//            ListIterator<PostModel> listPst = listPosts.listIterator();
-//
-//            while(listPst.hasNext()) {
-//                if (listPst.next().getParent() == 0) {
-//                    flagParent = 1;
-//                    break;
-//                }
-//            }
-//        }
 
         try {
 
@@ -71,11 +54,10 @@ public class ThreadService {
                 if (post.getParent() != 0) {
                     try {
                         final List<PostModel> posts = jdbcTmp.query(
-                                "select Posts.id, Posts.parent, Users.nickname, Posts.message, " +
+                                "select Posts.id, Posts.parent, Posts.nickname, Posts.message, " +
                                         " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
                                         " from Posts " +
                                         " join Forum on Posts.forum_id = Forum.id " +
-                                        " join Users on Posts.author = Users.id " +
                                         " where Posts.id=? and Posts.thread_id=?", (rs, rowNum) -> new PostModel(
                                         rs.getInt("id"),
                                         rs.getInt("parent"),
@@ -105,6 +87,8 @@ public class ThreadService {
                 } catch (EmptyResultDataAccessException e) {
                     throw new EmptyResultDataAccessException(1);
                 }
+
+
                 post.setId(jdbcTmp.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
                 post.setForum(thread.getForum());
                 post.setThreadId(thread.getId());
@@ -125,6 +109,8 @@ public class ThreadService {
                     preparedStatement.setInt(8, post.getId());
                 }
                 preparedStatement.setInt(9, post.getId());
+
+                preparedStatement.setString(10, post.getAuthor());
 
                 preparedStatement.addBatch();
             }
@@ -232,24 +218,11 @@ public class ThreadService {
         }
         sub += "order by  Posts.id " + sqlSort + " limit ?)";
 
-        String sql = sub + "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited," +
+        String sql = sub + "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited," +
                 " Forum.slug, Posts.thread_id, Posts.created from Posts " +
                 " join Forum on Posts.forum_id = Forum.id " +
-                " join Users on Posts.author = Users.id " +
                 " join sub on sub.path <@ Posts.path " +
                 "order by Posts.path " + sqlSort;
-
-
-//                "where Posts.thread_id=? ";
-//
-//                if (since != -1) {
-//                    sql+= "  and path[1] in sub" + sign +
-//                    "select path[1] from posts where id=? ";
-////                            "ANY (select id from posts where parent = 0 and path "+sign+" (select path from posts where id = ?) and thread_id = ? limit ? ) ";
-//                }
-//
-//                sql+="order by  Posts.path "+ sqlSort +",  Posts.id  " + sqlSort + " limit ? ;";
-//
 
         return jdbcTmp.query(sql, (rs, rowNum) -> new PostModel(
                 rs.getInt("id"),
@@ -268,10 +241,9 @@ public class ThreadService {
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
         //limit 65 since -1 desc true
-        String sql = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
+        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id " +
-                " join Users on Posts.author = Users.id ";
+                " join Forum on Posts.forum_id = Forum.id ";
                 if (since != -1) {
                     sql += " where (Posts.thread_id = ? and Posts.id " + sign +" "+ since + " ) ";
                 } else {
@@ -296,14 +268,10 @@ public class ThreadService {
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
 
-        String sql = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
+        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
                 " join Forum on Posts.forum_id = Forum.id " +
-                " join Users on Posts.author = Users.id " +
                 " WHERE  Posts.thread_id = ? ";
-
-
-
 
         if (since != -1) {
             sql += " and Posts.path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";

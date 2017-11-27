@@ -40,23 +40,22 @@ public class ThreadController {
             }
 
             ThreadModel thread = threadService.getThreadIdOrSlug(id, slugOrId);
-
             List<PostModel> posts = threadService.createPosts(thread, listPosts);
-
 
             final JSONArray result = new JSONArray();
             for (PostModel pst : posts) {
                 result.put(pst.getJson());
             }
+
             return ResponseEntity.status(HttpStatus.CREATED).body(result.toString());  // 201
 
         } catch (EmptyResultDataAccessException e) {
-            Error error = new Error("message", "Can't find forum with slug");
+            Error error = new Error("message", "Can't find forum with slug1");
 
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error.getJsonError().toString()); // 404
 
         } catch (DataIntegrityViolationException | SQLException e) {
-            Error error = new Error("message", "Can't find forum with slug");
+            Error error = new Error("message", "Can't find forum with slug2");
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error.getJsonError().toString()); //409
 

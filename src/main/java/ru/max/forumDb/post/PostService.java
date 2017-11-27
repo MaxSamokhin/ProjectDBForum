@@ -25,10 +25,9 @@ public class PostService {
     public JSONObject getInfoPosts(int id, String related) {
         JSONObject jsonObject = new JSONObject();
 
-        String sqlFindPostById = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
+        String sqlFindPostById = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
                 "join Forum on Posts.forum_id = Forum.id " +
-                "join Users on Posts.author = Users.id " +
                 "where Posts.id=?;";
         String sqlFindUserById = "select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
                 "from Posts join Users on Posts.author = Users.id " +

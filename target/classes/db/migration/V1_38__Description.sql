@@ -16,9 +16,9 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS user_nickname_index
-  ON Users (nickname);
+  ON Users (lower(nickname));
 CREATE UNIQUE INDEX IF NOT EXISTS user_email_index
-  ON Users (email);
+  ON Users (lower(email));
 
 CREATE TABLE IF NOT EXISTS Forum (
   id      SERIAL PRIMARY KEY,
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS Forum (
 
 
 CREATE UNIQUE INDEX IF NOT EXISTS forum_slug_index
-  ON Forum (slug);
+  ON Forum (lower(slug));
 CREATE INDEX IF NOT EXISTS forum_user_id_index
   ON Forum (user_id);
 
@@ -52,7 +52,7 @@ CREATE INDEX IF NOT EXISTS thread_author_id_index
 CREATE INDEX IF NOT EXISTS thread_forum_id_index
   ON Thread (forum_id);
 CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
-  ON Thread (slug);
+  ON Thread (lower(slug));
 
 CREATE TABLE IF NOT EXISTS Posts (
   id        SERIAL PRIMARY KEY,
@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS Posts (
   forum_id  INTEGER NOT NULL REFERENCES Forum (id),
   thread_id INTEGER NOT NULL REFERENCES Thread (id),
   created   TIMESTAMPTZ(6)           DEFAULT now(),
-  path      INTEGER []
+  path      INTEGER [],
+  nickname  CITEXT  NOT NULL
 );
-
 
 CREATE INDEX IF NOT EXISTS post_author_index
   ON Posts (author);
@@ -75,12 +75,20 @@ CREATE INDEX IF NOT EXISTS post_thread_id_index
   ON Posts (thread_id);
 CREATE INDEX IF NOT EXISTS post_parent_index
   ON Posts (parent);
+CREATE INDEX IF NOT EXISTS post_thread_created_id_index
+  ON Posts (thread_id, created, id);
 CREATE INDEX IF NOT EXISTS post_path_index
   ON Posts ((path [1]));
-CREATE INDEX IF NOT EXISTS post_thread_id_parent
-  ON posts (thread_id, parent);
-CREATE INDEX IF NOT EXISTS post_id_thread_id_index
-  ON posts (id, thread_id);
+CREATE INDEX IF NOT EXISTS post_id_parent_thread_index
+  ON Posts (id, parent, thread_id);
+CREATE INDEX IF NOT EXISTS post_created_index
+  ON Posts (created);
+CREATE INDEX IF NOT EXISTS post_thread_path_index
+  ON Posts (thread_id, path);
+CREATE INDEX IF NOT EXISTS post_id_forum_index
+  ON Posts (id, forum_id);
+
+
 
 CREATE TABLE IF NOT EXISTS Vote (
   user_id   INTEGER NOT NULL REFERENCES Users (id),

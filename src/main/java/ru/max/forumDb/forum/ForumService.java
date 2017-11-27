@@ -177,14 +177,12 @@ public class ForumService {
         String sign = !desc ? ">" : "<";
 
         final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext ;";
-
         String sql = " select * from ( " +
                 " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
                 " from Users join Posts on ( Posts.author= Users.id and Posts.forum_id = ? )" +
                 " union " +
                 " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
                 "from Users join Thread on ( Thread.author_id = Users.id and Thread.forum_id=? ) ) as res_user";
-
 
         if (since != null) {
             sql += " where lower( res_user.nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
@@ -203,7 +201,7 @@ public class ForumService {
     }
 
     public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
-        final String sqlFindForumId = "select Forum.id from Forum where lower(Forum.slug) = lower(?)";
+        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
 
         String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created as time_create " +
                 "from Thread join Users on Thread.author_id = Users.id " +

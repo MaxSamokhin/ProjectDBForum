@@ -12,7 +12,7 @@ public class PostModel {
 
     private int id;
     private int parent;
-    private String author;
+    private String nickname;
     private String message;
     private boolean isEdited;
     private String forum;  // forum_id
@@ -21,17 +21,17 @@ public class PostModel {
 
     @JsonCreator
     public PostModel(@JsonProperty("parent") int parent,
-                      @JsonProperty("author") String author,
+                      @JsonProperty("author") String nickname,
                       @JsonProperty("message") String message) {
         this.parent = parent;
-        this.author = author;
+        this.nickname = nickname;
         this.message = message;
     }
 
-    public PostModel(int id, int parent, String author, String message, boolean isEdited, String forum, int threadId, Timestamp created) {
+    public PostModel(int id, int parent, String nickname, String message, boolean isEdited, String forum, int threadId, Timestamp created) {
         this.id = id;
         this.parent = parent;
-        this.author = author;
+        this.nickname = nickname;
         this.message = message;
         this.isEdited = isEdited;
         this.forum = forum;
@@ -44,7 +44,7 @@ public class PostModel {
         final JSONObject jsonObject = new JSONObject();
         jsonObject.put("id", id);
         jsonObject.put("parent", parent);
-        jsonObject.put("author", author);
+        jsonObject.put("author", nickname);
         jsonObject.put("message", message);
         jsonObject.put("isEdited", isEdited);
         jsonObject.put("forum", forum);
@@ -63,7 +63,7 @@ public class PostModel {
     }
 
     public String getAuthor() {
-        return author;
+        return nickname;
     }
 
     public String getMessage() {
@@ -95,8 +95,8 @@ public class PostModel {
         this.parent = parent;
     }
 
-    public void setAuthor(String author) {
-        this.author = author;
+    public void setAuthor(String nickname) {
+        this.nickname = nickname;
     }
 
     public void setMessage(String message) {
@@ -128,7 +128,7 @@ public class PostModel {
 
         if (id != postModel.id) return false;
         if (parent != postModel.parent) return false;
-        if (author != postModel.author) return false;
+        if (nickname != postModel.nickname) return false;
         if (isEdited != postModel.isEdited) return false;
         if (threadId != postModel.threadId) return false;
         if (!message.equals(postModel.message)) return false;
@@ -140,7 +140,7 @@ public class PostModel {
     public int hashCode() {
         int result = id;
         result = 31 * result + parent;
-        result = 31 * result + author.hashCode();
+        result = 31 * result + nickname.hashCode();
         result = 31 * result + message.hashCode();
         result = 31 * result + (isEdited ? 1 : 0);
         result = 31 * result + forum.hashCode();
