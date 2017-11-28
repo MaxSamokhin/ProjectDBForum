@@ -186,7 +186,7 @@ public class ThreadService {
     }
 
     public ThreadModel getThreadIdOrSlug(int id, String slugOrId) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
                 "from Thread " +
                 "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
@@ -196,7 +196,7 @@ public class ThreadService {
     }
 
     public ThreadModel getThread(String slug) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
                 "from Thread " +
                 "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
@@ -215,40 +215,40 @@ public class ThreadService {
         return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id);
     }
 
-//    public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
-//        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
-//
-//        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
-//                "from Thread join Forum on Thread.forum_id = Forum.id " +
-//                "join Users on Thread.author_id = Users.id " +
-//                "where Forum.id = ? ";
-//
-//        if (since != null) {
-//            if (desc) {
-//                sql += " and Thread.created <= '" + since + "' ";
-//            } else {
-//                sql += " and Thread.created >= '" + since + "' ";
-//            }
-//        }
-//
-//        sql += desc ? " order by Thread.created DESC " : " order by Thread.created  ASC ";
-//
-//        if (limit != -1) {
-//            sql += " limit " + limit + ";";
-//        }
-//
-//        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-//        return jdbcTmp.query(sql, MAPPER_THREAD, forId);
-//    }
+    public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
+        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
+
+        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
+                "from Thread join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
+                "where Forum.id = ? ";
+
+        if (since != null) {
+            if (desc) {
+                sql += " and Thread.created <= '" + since + "' ";
+            } else {
+                sql += " and Thread.created >= '" + since + "' ";
+            }
+        }
+
+        sql += desc ? " order by Thread.created DESC " : " order by Thread.created  ASC ";
+
+        if (limit != -1) {
+            sql += " limit " + limit + ";";
+        }
+
+        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
+        return jdbcTmp.query(sql, MAPPER_THREAD, forId);
+    }
 
     public static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
             rs.getInt("id"),
             rs.getString("title"),
-            rs.getString("u_name"),
-            rs.getString("forum_slug"),
+            rs.getString("nickname"),
+            rs.getString("f_slug"),
             rs.getString("message"),
             rs.getInt("votes"),
-            rs.getString("slug"),
+            rs.getString("t_slug"),
             rs.getTimestamp("created")
     );
 

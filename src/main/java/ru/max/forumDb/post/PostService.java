@@ -4,15 +4,12 @@ import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.Message;
 import ru.max.forumDb.forum.ForumModel;
 import ru.max.forumDb.thread.ThreadModel;
 import ru.max.forumDb.user.UserModel;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.List;
 
 @Transactional

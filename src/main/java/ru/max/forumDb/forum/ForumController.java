@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import ru.max.forumDb.Error;
 import ru.max.forumDb.thread.ThreadModel;
+import ru.max.forumDb.thread.ThreadService;
 import ru.max.forumDb.user.UserModel;
 import ru.max.forumDb.user.UserService;
 
@@ -21,10 +22,12 @@ public class ForumController {
 
     private final ForumService forumService;
     private final UserService userService;
+    private final ThreadService threadService;
 
-    public ForumController(ForumService forumService, UserService userService) {
+    public ForumController(ForumService forumService, UserService userService, ThreadService threadService) {
         this.forumService = forumService;
         this.userService = userService;
+        this.threadService = threadService;
     }
 
     @PostMapping("/create")
@@ -69,7 +72,7 @@ public class ForumController {
 
         }  catch (DuplicateKeyException e) {
 
-            ThreadModel newThread = forumService.getThread(thread.getSlug());
+            ThreadModel newThread = threadService.getThread(thread.getSlug());
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(newThread.getJson().toString());
 
@@ -108,7 +111,7 @@ public class ForumController {
                                              @RequestParam(value = "since", required = false) String since,
                                              @RequestParam(value = "desc", required = false, defaultValue = "false") boolean desc) {
         try {
-            final List<ThreadModel> threads = forumService.getThreadsForum(slug, limit, since, desc);
+            final List<ThreadModel> threads = threadService.getThreadsForum(slug, limit, since, desc);
 
             final JSONArray result = new JSONArray();
             for (ThreadModel th : threads) {

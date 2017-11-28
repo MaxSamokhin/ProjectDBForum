@@ -1,19 +1,14 @@
 package ru.max.forumDb.forum;
 
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.thread.ThreadModel;
 import ru.max.forumDb.user.UserModel;
 import ru.max.forumDb.user.UserService;
 
-import java.sql.Timestamp;
-import java.util.List;
-import java.util.Objects;
 
 @Transactional
 @Repository
@@ -111,65 +106,6 @@ public class ForumService {
         return threadUpdrate;
     }
 
-
-    public ThreadModel getThread(String slug) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
-                "from Thread " +
-                "join Forum on Thread.forum_id = Forum.id " +
-                "join Users on Thread.author_id = Users.id " +
-                "where Thread.slug = ?::citext;";
-
-        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, slug);
-    }
-
-    public ThreadModel getThreadById(int id) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
-                "from Thread " +
-                "join Forum on Thread.forum_id = Forum.id " +
-                "join Users on Thread.author_id = Users.id " +
-                "where Thread.id = ?::citext;";
-
-        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id);
-    }
-
-
-    public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
-        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
-
-        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
-                "from Thread join Forum on Thread.forum_id = Forum.id " +
-                "join Users on Thread.author_id = Users.id " +
-                "where Forum.id = ? ";
-
-        if (since != null) {
-            if (desc) {
-                sql += " and Thread.created <= '" + since + "' ";
-            } else {
-                sql += " and Thread.created >= '" + since + "' ";
-            }
-        }
-
-        sql += desc ? " order by Thread.created DESC " : " order by Thread.created  ASC ";
-
-        if (limit != -1) {
-            sql += " limit " + limit + ";";
-        }
-
-        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-        return jdbcTmp.query(sql, MAPPER_THREAD, forId);
-    }
-
-
-    public static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
-            rs.getInt("id"),
-            rs.getString("title"),
-            rs.getString("nickname"),
-            rs.getString("f_slug"),
-            rs.getString("message"),
-            rs.getInt("votes"),
-            rs.getString("t_slug"),
-            rs.getTimestamp("created")
-    );
 
     public static final RowMapper<ForumModel> MAPPER_FORUM = (rs, rowNum) -> new ForumModel(
             rs.getLong("id"),
