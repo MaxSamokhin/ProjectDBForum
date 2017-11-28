@@ -3,6 +3,7 @@ package ru.max.forumDb.forum;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,13 +53,7 @@ public class ForumService {
                 "join Users on Forum.user_id = Users.id " +
                 "where slug = ?::citext;";
 
-        return jdbcTmp.queryForObject(sql, (rs, rowNum) -> new ForumModel(
-                rs.getLong("id"),
-                rs.getString("title"),
-                rs.getString("slug"),
-                rs.getString("nickname"),
-                rs.getInt("posts"),
-                rs.getInt("threads")), slug);
+        return jdbcTmp.queryForObject(sql, MAPPER_FORUM, slug);
     }
 
     public ForumModel getInfoAboutForum(String slug) {
@@ -66,13 +61,7 @@ public class ForumService {
                 "from Forum join Users on Forum.user_id = Users.id " +
                 "where Forum.slug = ?::citext";
 
-        return jdbcTmp.queryForObject(sql, (rs, rowNum) -> new ForumModel(
-                rs.getLong("id"),
-                rs.getString("title"),
-                rs.getString("slug"),
-                rs.getString("nickname"),
-                rs.getInt("posts"),
-                rs.getInt("threads")), slug);
+        return jdbcTmp.queryForObject(sql, MAPPER_FORUM, slug);
     }
 
     public ThreadModel createThread(ThreadModel threadUpdrate, String slug) {
@@ -82,28 +71,16 @@ public class ForumService {
                 "where Forum.slug = ?::citext";
 
 
-        ForumModel forum = jdbcTmp.queryForObject(sqlGetForum, (rs, rowNum) -> new ForumModel(
-                rs.getLong("id"),
-                rs.getString("title"),
-                rs.getString("slug"),
-                rs.getString("nickname"),
-                rs.getInt("posts"),
-                rs.getInt("threads")), slug);
+        ForumModel forum = jdbcTmp.queryForObject(sqlGetForum, MAPPER_FORUM, slug);
 //        ForumModel forum = getInfoAboutForum(slug);
 
         if (forum == null) {
             throw new EmptyResultDataAccessException(1);
         }
 
-        final String sqlGetUser = "select id, nickname, fullname, about, email from Users where nickname = ?::citext ;";
-
-        UserModel user = jdbcTmp.queryForObject(sqlGetUser, (rs, rowNum) -> new UserModel(
-                rs.getInt("id"),
-                rs.getString("nickname"),
-                rs.getString("email"),
-                rs.getString("fullname"),
-                rs.getString("about")
-        ), threadUpdrate.getAuthor());
+//        final String sqlGetUser = "select id, nickname, fullname, about, email from Users where nickname = ?::citext ;";
+//        UserModel user = jdbcTmp.queryForObject(sqlGetUser, MAPPER_USER, threadUpdrate.getAuthor());
+        UserModel user = UserService.getUserInfo(threadUpdrate.getAuthor());
 
 //        UserModel user = userService.getUserInfo(threadUpdrate.getAuthor());
 
@@ -136,76 +113,32 @@ public class ForumService {
 
 
     public ThreadModel getThread(String slug) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
                 "from Thread " +
                 "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
                 "where Thread.slug = ?::citext;";
 
-        return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(
-                rs.getInt("id"),
-                rs.getString("title"),
-                rs.getString("u_name"),
-                rs.getString("forum_slug"),
-                rs.getString("message"),
-                rs.getInt("votes"),
-                rs.getString("slug"),
-                rs.getTimestamp("created")), slug);
+        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, slug);
     }
 
     public ThreadModel getThreadById(int id) {
-        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
                 "from Thread " +
                 "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
                 "where Thread.id = ?::citext;";
 
-        return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(
-                rs.getInt("id"),
-                rs.getString("title"),
-                rs.getString("u_name"),
-                rs.getString("forum_slug"),
-                rs.getString("message"),
-                rs.getInt("votes"),
-                rs.getString("slug"),
-                rs.getTimestamp("created")), id);
+        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id);
     }
 
-    public List<UserModel> getUsersForum(String slug, int limit, String since, boolean desc) {
-
-        String sqlSort = !desc ? "asc" : "desc";
-        String sign = !desc ? ">" : "<";
-
-        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext ;";
-        String sql = " select * from ( " +
-                " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
-                " from Users join Posts on ( Posts.author= Users.id and Posts.forum_id = ? )" +
-                " union " +
-                " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
-                "from Users join Thread on ( Thread.author_id = Users.id and Thread.forum_id=? ) ) as res_user";
-
-        if (since != null) {
-            sql += " where lower( res_user.nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
-        }
-
-        sql += " order by res_user.nickname::citext COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
-
-        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-
-        return jdbcTmp.query(sql, (rs, rowNum) -> new UserModel(
-                rs.getInt("id"),
-                rs.getString("nickname"),
-                rs.getString("email"),
-                rs.getString("fullname"),
-                rs.getString("about")), forId, forId, limit);
-    }
 
     public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
         final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
 
-        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created as time_create " +
-                "from Thread join Users on Thread.author_id = Users.id " +
-                "join Forum on Thread.forum_id = Forum.id " +
+        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
+                "from Thread join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
                 "where Forum.id = ? ";
 
         if (since != null) {
@@ -223,15 +156,28 @@ public class ForumService {
         }
 
         Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-        return jdbcTmp.query(sql, (rs, rowNum) -> new ThreadModel(
-                rs.getInt("id"),
-                rs.getString("title"),
-                rs.getString("nickname"),
-                rs.getString("f_slug"),
-                rs.getString("message"),
-                rs.getInt("votes"),
-                rs.getString("t_slug"),
-                rs.getTimestamp("time_create")), forId);
+        return jdbcTmp.query(sql, MAPPER_THREAD, forId);
     }
+
+
+    public static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
+            rs.getInt("id"),
+            rs.getString("title"),
+            rs.getString("nickname"),
+            rs.getString("f_slug"),
+            rs.getString("message"),
+            rs.getInt("votes"),
+            rs.getString("t_slug"),
+            rs.getTimestamp("created")
+    );
+
+    public static final RowMapper<ForumModel> MAPPER_FORUM = (rs, rowNum) -> new ForumModel(
+            rs.getLong("id"),
+            rs.getString("title"),
+            rs.getString("slug"),
+            rs.getString("nickname"),
+            rs.getInt("posts"),
+            rs.getInt("threads")
+    );
 
 }

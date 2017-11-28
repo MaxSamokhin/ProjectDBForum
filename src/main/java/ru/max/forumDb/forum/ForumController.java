@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.max.forumDb.Error;
 import ru.max.forumDb.thread.ThreadModel;
 import ru.max.forumDb.user.UserModel;
+import ru.max.forumDb.user.UserService;
 
 import java.util.List;
 
@@ -19,9 +20,11 @@ import java.util.List;
 public class ForumController {
 
     private final ForumService forumService;
+    private final UserService userService;
 
-    public ForumController(ForumService forumService) {
+    public ForumController(ForumService forumService, UserService userService) {
         this.forumService = forumService;
+        this.userService = userService;
     }
 
     @PostMapping("/create")
@@ -84,7 +87,7 @@ public class ForumController {
 
         try {
 
-            final List<UserModel> users = forumService.getUsersForum(slug, limit, since, desc);
+            final List<UserModel> users = userService.getUsersForum(slug, limit, since, desc);
 
             final JSONArray result = new JSONArray();
             for (UserModel user : users) {

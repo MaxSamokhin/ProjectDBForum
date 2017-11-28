@@ -4,10 +4,11 @@ package ru.max.forumDb.thread;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import ru.max.forumDb.forum.ForumModel;
 import ru.max.forumDb.forum.ForumService;
 import ru.max.forumDb.post.PostModel;
@@ -58,15 +59,7 @@ public class ThreadService {
                                         " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
                                         " from Posts " +
                                         " join Forum on Posts.forum_id = Forum.id " +
-                                        " where Posts.id=? and Posts.thread_id=?", (rs, rowNum) -> new PostModel(
-                                        rs.getInt("id"),
-                                        rs.getInt("parent"),
-                                        rs.getString("nickname"),
-                                        rs.getString("message"),
-                                        rs.getBoolean("is_edited"),
-                                        rs.getString("slug"),
-                                        rs.getInt("thread_id"),
-                                        rs.getTimestamp("created")), post.getParent(), thread.getId());
+                                        " where Posts.id=? and Posts.thread_id=?", MAPPER_POST, post.getParent(), thread.getId());
                         if (posts.isEmpty()) {
                             throw new SQLException();
                         }
@@ -75,19 +68,7 @@ public class ThreadService {
                     }
                 }
 
-                final String sqlFindUser = "select id, nickname, fullname, about, email from Users where nickname = ?::citext ;";
-                try {
-                   UserModel user = jdbcTmp.queryForObject(sqlFindUser, (rs, rowNum) -> new UserModel(
-                           rs.getInt("id"),
-                           rs.getString("nickname"),
-                           rs.getString("email"),
-                           rs.getString("fullname"),
-                           rs.getString("about")
-                   ), post.getAuthor());
-                } catch (EmptyResultDataAccessException e) {
-                    throw new EmptyResultDataAccessException(1);
-                }
-
+                UserModel user = UserService.getUserInfo(post.getAuthor()); // ???
 
                 post.setId(jdbcTmp.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
                 post.setForum(thread.getForum());
@@ -109,9 +90,7 @@ public class ThreadService {
                     preparedStatement.setInt(8, post.getId());
                 }
                 preparedStatement.setInt(9, post.getId());
-
                 preparedStatement.setString(10, post.getAuthor());
-
                 preparedStatement.addBatch();
             }
 
@@ -133,11 +112,11 @@ public class ThreadService {
 
     public ThreadModel updateInfoThread(ThreadModel thread, ThreadModel threadInfo) {
 
-        if(threadInfo.getTitle() == null) {
+        if (threadInfo.getTitle() == null) {
             threadInfo.setTitle(thread.getTitle());
         }
 
-        if(threadInfo.getMessage() == null) {
+        if (threadInfo.getMessage() == null) {
             threadInfo.setMessage(thread.getMessage());
         }
 
@@ -206,89 +185,6 @@ public class ThreadService {
         return thread;
     }
 
-    public List<PostModel> getPostsParentTree(ThreadModel thread, int limit, int since, boolean desc) {
-
-        String sqlSort = !desc ? "asc" : "desc";
-        String sign = !desc ? ">" : "<";
-
-        String sub = "with sub as (select path from posts where thread_id=? and parent=0 ";
-
-        if (since != -1) {
-            sub += "and path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
-        }
-        sub += "order by  Posts.id " + sqlSort + " limit ?)";
-
-        String sql = sub + "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited," +
-                " Forum.slug, Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id " +
-                " join sub on sub.path <@ Posts.path " +
-                "order by Posts.path " + sqlSort;
-
-        return jdbcTmp.query(sql, (rs, rowNum) -> new PostModel(
-                rs.getInt("id"),
-                rs.getInt("parent"),
-                rs.getString("nickname"),
-                rs.getString("message"),
-                rs.getBoolean("is_edited"),
-                rs.getString("slug"),
-                rs.getInt("thread_id"),
-                rs.getTimestamp("created")), thread.getId(), limit);
-    }
-
-
-    public List<PostModel> getPostsFlat(ThreadModel thread, int limit, int since, boolean desc) {
-
-        String sqlSort = !desc ? "asc" : "desc";
-        String sign = !desc ? ">" : "<";
-        //limit 65 since -1 desc true
-        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id ";
-                if (since != -1) {
-                    sql += " where (Posts.thread_id = ? and Posts.id " + sign +" "+ since + " ) ";
-                } else {
-                    sql += "where Posts.thread_id = ? ";
-                }
-                sql += "order by  Posts.created " + sqlSort + ",  Posts.id  " + sqlSort + " limit ? ;";
-
-        return jdbcTmp.query(sql, (rs, rowNum) -> new PostModel(
-                rs.getInt("id"),
-                rs.getInt("parent"),
-                rs.getString("nickname"),
-                rs.getString("message"),
-                rs.getBoolean("is_edited"),
-                rs.getString("slug"),
-                rs.getInt("thread_id"),
-                rs.getTimestamp("created")), thread.getId(), limit);
-
-    }
-
-    public List<PostModel> getPostsTree(ThreadModel thread, int limit, int since, boolean desc) {
-
-        String sqlSort = !desc ? "asc" : "desc";
-        String sign = !desc ? ">" : "<";
-
-        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id " +
-                " WHERE  Posts.thread_id = ? ";
-
-        if (since != -1) {
-            sql += " and Posts.path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
-        }
-        sql += "order by  Posts.path " + sqlSort + ", Posts.id " + sqlSort + " limit ? ;";
-
-        return jdbcTmp.query(sql, (rs, rowNum) -> new PostModel(
-                rs.getInt("id"),
-                rs.getInt("parent"),
-                rs.getString("nickname"),
-                rs.getString("message"),
-                rs.getBoolean("is_edited"),
-                rs.getString("slug"),
-                rs.getInt("thread_id"),
-                rs.getTimestamp("created")), thread.getId(), limit);
-    }
-
     public ThreadModel getThreadIdOrSlug(int id, String slugOrId) {
         final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as u_name, Forum.slug as forum_slug,Thread.message,Thread.votes, Thread.slug, Thread.created " +
                 "from Thread " +
@@ -296,16 +192,76 @@ public class ThreadService {
                 "join Users on Thread.author_id = Users.id " +
                 "where Thread.id = ? or Thread.slug=?::citext;";
 
-        return jdbcTmp.queryForObject(sqlFindThread, (rs, rowNum) -> new ThreadModel(
-                rs.getInt("id"),
-                rs.getString("title"),
-                rs.getString("u_name"),
-                rs.getString("forum_slug"),
-                rs.getString("message"),
-                rs.getInt("votes"),
-                rs.getString("slug"),
-                rs.getTimestamp("created")), id, slugOrId);
+        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id, slugOrId);
     }
+
+    public ThreadModel getThread(String slug) {
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname as nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
+                "from Thread " +
+                "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
+                "where Thread.slug = ?::citext;";
+
+        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, slug);
+    }
+
+    public ThreadModel getThreadById(int id) {
+        final String sqlFindThread = "select Thread.id,Thread.title, Users.nickname, Forum.slug as f_slug,Thread.message,Thread.votes, Thread.slug as t_slug, Thread.created " +
+                "from Thread " +
+                "join Forum on Thread.forum_id = Forum.id " +
+                "join Users on Thread.author_id = Users.id " +
+                "where Thread.id = ?::citext;";
+
+        return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id);
+    }
+
+//    public List<ThreadModel> getThreadsForum(String slug, int limit, String since, boolean desc) {
+//        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
+//
+//        String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
+//                "from Thread join Forum on Thread.forum_id = Forum.id " +
+//                "join Users on Thread.author_id = Users.id " +
+//                "where Forum.id = ? ";
+//
+//        if (since != null) {
+//            if (desc) {
+//                sql += " and Thread.created <= '" + since + "' ";
+//            } else {
+//                sql += " and Thread.created >= '" + since + "' ";
+//            }
+//        }
+//
+//        sql += desc ? " order by Thread.created DESC " : " order by Thread.created  ASC ";
+//
+//        if (limit != -1) {
+//            sql += " limit " + limit + ";";
+//        }
+//
+//        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
+//        return jdbcTmp.query(sql, MAPPER_THREAD, forId);
+//    }
+
+    public static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
+            rs.getInt("id"),
+            rs.getString("title"),
+            rs.getString("u_name"),
+            rs.getString("forum_slug"),
+            rs.getString("message"),
+            rs.getInt("votes"),
+            rs.getString("slug"),
+            rs.getTimestamp("created")
+    );
+
+    public static final RowMapper<PostModel> MAPPER_POST = (rs, rowNum) -> new PostModel(
+            rs.getInt("id"),
+            rs.getInt("parent"),
+            rs.getString("nickname"),
+            rs.getString("message"),
+            rs.getBoolean("is_edited"),
+            rs.getString("slug"),
+            rs.getInt("thread_id"),
+            rs.getTimestamp("created")
+    );
 }
 
 

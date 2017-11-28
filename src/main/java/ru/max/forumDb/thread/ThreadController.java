@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.max.forumDb.Error;
 import ru.max.forumDb.forum.ForumService;
 import ru.max.forumDb.post.PostModel;
-import ru.max.forumDb.user.UserModel;
+import ru.max.forumDb.post.PostService;
 import ru.max.forumDb.vote.VoteModel;
 
 import java.sql.SQLException;
@@ -22,10 +22,12 @@ public class ThreadController {
 
     private final ThreadService threadService;
     private final ForumService forumService;
+    private final PostService postService;
 
-    public ThreadController(ThreadService threadService, ForumService forumService) {
+    public ThreadController(ThreadService threadService, ForumService forumService, PostService postService) {
         this.threadService = threadService;
         this.forumService = forumService;
+        this.postService = postService;
     }
 
     @PostMapping("/{slug_or_id}/create")
@@ -148,7 +150,7 @@ public class ThreadController {
 
             if (Objects.equals(sort, "flat")) {
 
-                posts = threadService.getPostsFlat(thread, limit, since, desc);
+                posts = postService.getPostsFlat(thread, limit, since, desc);
 
                 final JSONArray result = new JSONArray();
                 for (PostModel pst : posts) {
@@ -160,7 +162,7 @@ public class ThreadController {
 
             if (Objects.equals(sort, "tree")) {
 
-                posts = threadService.getPostsTree(thread, limit, since, desc);
+                posts = postService.getPostsTree(thread, limit, since, desc);
 
                 final JSONArray result = new JSONArray();
                 for (PostModel pst : posts) {
@@ -171,7 +173,7 @@ public class ThreadController {
             }
             if (Objects.equals(sort, "parent_tree")) {
 
-                posts = threadService.getPostsParentTree(thread, limit, since, desc);
+                posts = postService.getPostsParentTree(thread, limit, since, desc);
                 final JSONArray result = new JSONArray();
                 for (PostModel pst : posts) {
                     result.put(pst.getJson());

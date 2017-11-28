@@ -7,6 +7,25 @@ DROP TABLE IF EXISTS Users CASCADE;
 DROP TABLE IF EXISTS Vote CASCADE;
 DROP TABLE IF EXISTS Votes CASCADE;
 
+DROP INDEX IF EXISTS user_nickname_index;
+DROP INDEX IF EXISTS user_email_index;
+
+DROP INDEX IF EXISTS forum_slug_index;
+DROP INDEX IF EXISTS forum_user_id_index;
+
+DROP INDEX IF EXISTS thread_author_id_index;
+DROP INDEX IF EXISTS thread_forum_id_index;
+DROP INDEX IF EXISTS thread_slug_index;
+
+DROP INDEX IF EXISTS post_author_index;
+DROP INDEX IF EXISTS post_thread_id_index;
+DROP INDEX IF EXISTS post_parent_index;
+DROP INDEX IF EXISTS post_path_index;
+DROP INDEX IF EXISTS post_created_index;
+
+DROP INDEX IF EXISTS vote_user_id_index;
+DROP INDEX IF EXISTS vote_thread_id_index;
+
 CREATE TABLE IF NOT EXISTS Users (
   id       SERIAL PRIMARY KEY,
   nickname CITEXT      NOT NULL UNIQUE,
@@ -16,9 +35,9 @@ CREATE TABLE IF NOT EXISTS Users (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS user_nickname_index
-  ON Users (lower(nickname));
+  ON Users (nickname);
 CREATE UNIQUE INDEX IF NOT EXISTS user_email_index
-  ON Users (lower(email));
+  ON Users (email);
 
 CREATE TABLE IF NOT EXISTS Forum (
   id      SERIAL PRIMARY KEY,
@@ -31,7 +50,7 @@ CREATE TABLE IF NOT EXISTS Forum (
 
 
 CREATE UNIQUE INDEX IF NOT EXISTS forum_slug_index
-  ON Forum (lower(slug));
+  ON Forum (slug);
 CREATE INDEX IF NOT EXISTS forum_user_id_index
   ON Forum (user_id);
 
@@ -52,7 +71,7 @@ CREATE INDEX IF NOT EXISTS thread_author_id_index
 CREATE INDEX IF NOT EXISTS thread_forum_id_index
   ON Thread (forum_id);
 CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
-  ON Thread (lower(slug));
+  ON Thread (slug);
 
 CREATE TABLE IF NOT EXISTS Posts (
   id        SERIAL PRIMARY KEY,
@@ -75,19 +94,10 @@ CREATE INDEX IF NOT EXISTS post_thread_id_index
   ON Posts (thread_id);
 CREATE INDEX IF NOT EXISTS post_parent_index
   ON Posts (parent);
-CREATE INDEX IF NOT EXISTS post_thread_created_id_index
-  ON Posts (thread_id, created, id);
 CREATE INDEX IF NOT EXISTS post_path_index
   ON Posts ((path [1]));
-CREATE INDEX IF NOT EXISTS post_id_parent_thread_index
-  ON Posts (id, parent, thread_id);
 CREATE INDEX IF NOT EXISTS post_created_index
   ON Posts (created);
-CREATE INDEX IF NOT EXISTS post_thread_path_index
-  ON Posts (thread_id, path);
-CREATE INDEX IF NOT EXISTS post_id_forum_index
-  ON Posts (id, forum_id);
-
 
 
 CREATE TABLE IF NOT EXISTS Vote (
