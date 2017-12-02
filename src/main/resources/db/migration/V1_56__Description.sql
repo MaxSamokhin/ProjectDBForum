@@ -95,6 +95,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
   ON Thread (slug);
 CREATE INDEX thread_created_index
   ON Thread (created);
+CREATE INDEX thread_id_slug_index
+  ON Thread (id, slug);
 
 
 CREATE TABLE IF NOT EXISTS Posts (
@@ -124,14 +126,16 @@ CREATE INDEX IF NOT EXISTS post_path_index
 CREATE INDEX IF NOT EXISTS post_created_index
   ON Posts (created);
 
-CREATE INDEX IF NOT EXISTS post_thread_created_id ON Posts (thread_id, created, id);
+CREATE INDEX IF NOT EXISTS post_thread_created_id
+  ON Posts (thread_id, created, id);
 CREATE INDEX IF NOT EXISTS post_thread_id_path_index
   ON Posts (thread_id, path);
 CREATE INDEX IF NOT EXISTS post_id_path_index
-  ON Posts (id, path);
-
-CREATE INDEX IF NOT EXISTS post_id_forum_index ON Posts (id, forum_id);
-CREATE INDEX IF NOT EXISTS post_id_thread_index ON posts (id, thread_id);
+  ON Posts (path, id);
+CREATE INDEX IF NOT EXISTS post_id_thread_index
+  ON posts (thread_id, id);
+CREATE INDEX IF NOT EXISTS post_created_id_index
+  ON Posts (created, id);
 
 
 CREATE TABLE IF NOT EXISTS Forum_User (
@@ -180,4 +184,5 @@ CREATE INDEX IF NOT EXISTS vote_user_id_index
   ON Vote (user_id);
 CREATE INDEX IF NOT EXISTS vote_thread_id_index
   ON Vote (thread_id);
-
+CREATE INDEX IF NOT EXISTS vote_user_thread_index
+  ON Vote (user_id, thread_id);
