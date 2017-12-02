@@ -1,21 +1,27 @@
 CREATE EXTENSION IF NOT EXISTS CITEXT;
 
+
 DROP TABLE IF EXISTS Forum CASCADE;
 DROP TABLE IF EXISTS Posts CASCADE;
 DROP TABLE IF EXISTS Thread CASCADE;
 DROP TABLE IF EXISTS Users CASCADE;
 DROP TABLE IF EXISTS Vote CASCADE;
 DROP TABLE IF EXISTS Votes CASCADE;
+DROP TABLE IF EXISTS Forum_User CASCADE;
+
 
 DROP INDEX IF EXISTS user_nickname_index;
 DROP INDEX IF EXISTS user_email_index;
 
+
 DROP INDEX IF EXISTS forum_slug_index;
 DROP INDEX IF EXISTS forum_user_id_index;
+
 
 DROP INDEX IF EXISTS thread_author_id_index;
 DROP INDEX IF EXISTS thread_forum_id_index;
 DROP INDEX IF EXISTS thread_slug_index;
+
 
 DROP INDEX IF EXISTS post_author_index;
 DROP INDEX IF EXISTS post_thread_id_index;
@@ -23,8 +29,20 @@ DROP INDEX IF EXISTS post_parent_index;
 DROP INDEX IF EXISTS post_path_index;
 DROP INDEX IF EXISTS post_created_index;
 
+
 DROP INDEX IF EXISTS vote_user_id_index;
 DROP INDEX IF EXISTS vote_thread_id_index;
+
+
+DROP INDEX IF EXISTS forum_user_user_id_index;
+DROP INDEX IF EXISTS forum_user_forum_id_index;
+
+
+DROP TRIGGER IF EXISTS trigger_post
+ON Thread;
+DROP TRIGGER IF EXISTS trigger_thread
+ON Posts;
+
 
 CREATE TABLE IF NOT EXISTS Users (
   id       SERIAL PRIMARY KEY,
@@ -34,10 +52,12 @@ CREATE TABLE IF NOT EXISTS Users (
   about    TEXT
 );
 
+
 CREATE UNIQUE INDEX IF NOT EXISTS user_nickname_index
   ON Users (nickname);
 CREATE UNIQUE INDEX IF NOT EXISTS user_email_index
   ON Users (email);
+
 
 CREATE TABLE IF NOT EXISTS Forum (
   id      SERIAL PRIMARY KEY,
@@ -53,6 +73,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS forum_slug_index
   ON Forum (slug);
 CREATE INDEX IF NOT EXISTS forum_user_id_index
   ON Forum (user_id);
+
 
 CREATE TABLE IF NOT EXISTS Thread (
   id        SERIAL PRIMARY KEY,
@@ -72,11 +93,16 @@ CREATE INDEX IF NOT EXISTS thread_forum_id_index
   ON Thread (forum_id);
 CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
   ON Thread (slug);
+CREATE INDEX thread_created_index
+  ON Thread (created);
+CREATE INDEX thread_id_slug_index
+  ON Thread (id, slug);
+
 
 CREATE TABLE IF NOT EXISTS Posts (
   id        SERIAL PRIMARY KEY,
   parent    INTEGER NOT NULL         DEFAULT 0,
-  author    INTEGER NOT NULL REFERENCES Users (id),
+  author_id INTEGER NOT NULL REFERENCES Users (id),
   message   TEXT    NOT NULL,
   is_edited BOOLEAN                  DEFAULT FALSE,
   forum_id  INTEGER NOT NULL REFERENCES Forum (id),
@@ -86,8 +112,9 @@ CREATE TABLE IF NOT EXISTS Posts (
   nickname  CITEXT  NOT NULL
 );
 
+
 CREATE INDEX IF NOT EXISTS post_author_index
-  ON Posts (author);
+  ON Posts (author_id);
 CREATE INDEX IF NOT EXISTS post_forum_id_index
   ON Posts (forum_id);
 CREATE INDEX IF NOT EXISTS post_thread_id_index
@@ -99,6 +126,52 @@ CREATE INDEX IF NOT EXISTS post_path_index
 CREATE INDEX IF NOT EXISTS post_created_index
   ON Posts (created);
 
+CREATE INDEX IF NOT EXISTS post_thread_created_id
+  ON Posts (thread_id, created, id);
+CREATE INDEX IF NOT EXISTS post_thread_id_path_index
+  ON Posts (thread_id, path);
+CREATE INDEX IF NOT EXISTS post_id_path_index
+  ON Posts (path, id);
+CREATE INDEX IF NOT EXISTS post_id_thread_index
+  ON posts (thread_id, id);
+CREATE INDEX IF NOT EXISTS post_created_id_index
+  ON Posts (created, id);
+
+
+CREATE TABLE IF NOT EXISTS Forum_User (
+  user_id  INTEGER REFERENCES Users (id),
+  forum_id INTEGER REFERENCES Forum (id)
+);
+
+
+CREATE INDEX IF NOT EXISTS forum_user_user_id_index
+  ON Forum_User (user_id);
+CREATE INDEX IF NOT EXISTS forum_user_forum_id_index
+  ON Forum_User (forum_id);
+CREATE INDEX IF NOT EXISTS forum_user_forum_all_index
+  ON Forum_User (user_id, forum_id);
+
+
+CREATE OR REPLACE FUNCTION forum_user()
+  RETURNS TRIGGER AS $forum_user$
+
+BEGIN
+  INSERT INTO Forum_User (user_id, forum_id) VALUES (NEW.author_id, NEW.forum_id);
+  RETURN NULL;
+END;
+
+$forum_user$ LANGUAGE plpgsql;
+
+
+CREATE TRIGGER trigger_thread
+AFTER INSERT ON Thread
+FOR EACH ROW EXECUTE PROCEDURE forum_user();
+
+
+CREATE TRIGGER trigger_post
+AFTER INSERT ON Posts
+FOR EACH ROW EXECUTE PROCEDURE forum_user();
+
 
 CREATE TABLE IF NOT EXISTS Vote (
   user_id   INTEGER NOT NULL REFERENCES Users (id),
@@ -106,7 +179,10 @@ CREATE TABLE IF NOT EXISTS Vote (
   voice     INTEGER NOT NULL
 );
 
+
 CREATE INDEX IF NOT EXISTS vote_user_id_index
   ON Vote (user_id);
 CREATE INDEX IF NOT EXISTS vote_thread_id_index
   ON Vote (thread_id);
+CREATE INDEX IF NOT EXISTS vote_user_thread_index
+  ON Vote (user_id, thread_id);

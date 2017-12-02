@@ -35,8 +35,8 @@ public class ThreadService {
     }
 
     public List<PostModel> createPosts(ThreadModel thread, List<PostModel> listPosts) throws SQLException {
-        String sql = "insert into Posts (id, parent, author, message, forum_id, thread_id, created, path, nickname ) " +
-                "values (?, ?,(select Users.id from Users where Users.nickname=?),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?)";
+        String sql = "insert into Posts (id, parent, author_id, message, forum_id, thread_id, created, path, nickname ) " +
+                "values (?, ?,(select Users.id from Users where Users.nickname=?::citext),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?)";
 
         Timestamp nowTime = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
 
@@ -57,8 +57,8 @@ public class ThreadService {
                         final List<PostModel> posts = jdbcTmp.query(
                                 "select Posts.id, Posts.parent, Posts.nickname, Posts.message, " +
                                         " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
-                                        " from Posts " +
-                                        " join Forum on Posts.forum_id = Forum.id " +
+                                        " from Forum " +
+                                        " join Posts on Posts.forum_id = Forum.id " +
                                         " where Posts.id=? and Posts.thread_id=?", MAPPER_POST, post.getParent(), thread.getId());
                         if (posts.isEmpty()) {
                             throw new SQLException();
@@ -210,7 +210,7 @@ public class ThreadService {
                 "from Thread " +
                 "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
-                "where Thread.id = ?::citext;";
+                "where Thread.id = ?;";
 
         return jdbcTmp.queryForObject(sqlFindThread, MAPPER_THREAD, id);
     }
@@ -219,7 +219,8 @@ public class ThreadService {
         final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext;";
 
         String sql = "select distinct Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, Thread.votes, Thread.slug as t_slug, Thread.created " +
-                "from Thread join Forum on Thread.forum_id = Forum.id " +
+                "from Thread " +
+                "join Forum on Thread.forum_id = Forum.id " +
                 "join Users on Thread.author_id = Users.id " +
                 "where Forum.id = ? ";
 

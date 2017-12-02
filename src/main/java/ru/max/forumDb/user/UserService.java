@@ -65,22 +65,19 @@ public class UserService {
         String sign = !desc ? ">" : "<";
 
         final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext ;";
-        String sql = " select * from ( " +
-                " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
-                " from Users join Posts on ( Posts.author= Users.id and Posts.forum_id = ? )" +
-                " union " +
-                " select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
-                "from Users join Thread on ( Thread.author_id = Users.id and Thread.forum_id=? ) ) as res_user";
+
+        String sql = "select id, nickname, fullname, about, email from users " +
+                "where users.id in (select user_id from forum_user where forum_id= ?) ";
 
         if (since != null) {
-            sql += " where lower( res_user.nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
+            sql += " and lower( nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
         }
 
-        sql += " order by res_user.nickname::citext COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
+        sql += " order by nickname::citext COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
 
         Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
 
-        return jdbcTmp.query(sql, MAPPER_USER, forId, forId, limit);
+        return jdbcTmp.query(sql, MAPPER_USER, forId, limit);
     }
 
 

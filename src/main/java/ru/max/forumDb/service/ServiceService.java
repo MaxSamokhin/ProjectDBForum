@@ -20,7 +20,8 @@ public class ServiceService {
                 "TRUNCATE Posts CASCADE; " +
                 "TRUNCATE Thread CASCADE; " +
                 "TRUNCATE Users CASCADE; " +
-                "TRUNCATE Vote CASCADE; ";
+                "TRUNCATE Vote CASCADE; " +
+                "TRUNCATE Forum_User CASCADE; ";
 
         jdbcTmp.update(sql);
 
