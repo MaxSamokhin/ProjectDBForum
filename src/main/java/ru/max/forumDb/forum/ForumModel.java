@@ -91,31 +91,4 @@ public class ForumModel {
     public void setThreads(int threads) {
         this.threads = threads;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        ForumModel that = (ForumModel) o;
-
-        if (posts != that.posts) return false;
-        if (threads != that.threads) return false;
-        if (!id.equals(that.id)) return false;
-        if (!title.equals(that.title)) return false;
-        if (!slug.equals(that.slug)) return false;
-        return user.equals(that.user);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id.hashCode();
-        result = 31 * result + title.hashCode();
-        result = 31 * result + slug.hashCode();
-        result = 31 * result + user.hashCode();
-        result = 31 * result + posts;
-        result = 31 * result + threads;
-        return result;
-    }
-
 }

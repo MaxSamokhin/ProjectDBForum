@@ -2,12 +2,12 @@ package ru.max.forumDb.thread;
 
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DataRetrievalFailureException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 
 import ru.max.forumDb.forum.ForumModel;
 import ru.max.forumDb.forum.ForumService;
@@ -20,8 +20,7 @@ import java.sql.*;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-@Transactional
-@Repository
+@Service
 public class ThreadService {
 
     private final JdbcTemplate jdbcTmp;
@@ -34,7 +33,7 @@ public class ThreadService {
         this.userService = userService;
     }
 
-    public List<PostModel> createPosts(ThreadModel thread, List<PostModel> listPosts) throws SQLException {
+    public void createPosts(ThreadModel thread, List<PostModel> listPosts) throws SQLException {
         String sql = "insert into Posts (id, parent, author_id, message, forum_id, thread_id, created, path, nickname ) " +
                 "values (?, ?,(select Users.id from Users where Users.nickname=?::citext),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?)";
 
@@ -43,14 +42,18 @@ public class ThreadService {
         int threadId = thread.getId();
 
 
-        try {
+        try (Connection connection = jdbcTmp.getDataSource().getConnection()) {
+            connection.setAutoCommit(false);
 
-            Connection connection = DataSourceUtils.getConnection(jdbcTmp.getDataSource());
-            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+//            Connection connection = DataSourceUtils.getConnection(jdbcTmp.getDataSource());
 
-            ForumModel forum = (ForumModel) forumService.findBySlug(thread.getForum());
+            ForumModel forum = (ForumModel) forumService.findBySlug(thread.getForum());  // ??
 
-            for (PostModel post : listPosts) {
+//            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.NO_GENERATED_KEYS)) {
+
+                for (PostModel post : listPosts) {
 
                 if (post.getParent() != 0) {
                     try {
@@ -68,45 +71,52 @@ public class ThreadService {
                     }
                 }
 
-                UserModel user = UserService.getUserInfo(post.getAuthor()); // ???
+                    UserModel user = UserService.getUserInfo(post.getAuthor()); // ???
+                    post.setId(jdbcTmp.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
 
-                post.setId(jdbcTmp.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
-                post.setForum(thread.getForum());
-                post.setThreadId(thread.getId());
-                post.setCreated(nowTime);
+                    post.setForum(thread.getForum());
+                    post.setThreadId(thread.getId());
+                    post.setCreated(nowTime);
 
+                    preparedStatement.setInt(1, post.getId());
+                    preparedStatement.setInt(2, post.getParent());
+                    preparedStatement.setString(3, post.getAuthor());
+                    preparedStatement.setString(4, post.getMessage());
+                    preparedStatement.setLong(5, forum.getId());
+                    preparedStatement.setInt(6, threadId);
+                    preparedStatement.setTimestamp(7, post.getCreated());
 
-                preparedStatement.setInt(1, post.getId());
-                preparedStatement.setInt(2, post.getParent());
-                preparedStatement.setString(3, post.getAuthor());
-                preparedStatement.setString(4, post.getMessage());
-                preparedStatement.setLong(5, forum.getId());
-                preparedStatement.setInt(6, threadId);
-                preparedStatement.setTimestamp(7, post.getCreated());
+                    if (post.getParent() != 0) {
+                        preparedStatement.setInt(8, post.getParent());
+                    } else {
+                        preparedStatement.setInt(8, post.getId());
+                    }
+                    preparedStatement.setInt(9, post.getId());
+                    preparedStatement.setString(10, post.getAuthor());
 
-                if (post.getParent() != 0) {
-                    preparedStatement.setInt(8, post.getParent());
-                } else {
-                    preparedStatement.setInt(8, post.getId());
+                    preparedStatement.addBatch();
                 }
-                preparedStatement.setInt(9, post.getId());
-                preparedStatement.setString(10, post.getAuthor());
-                preparedStatement.addBatch();
+                preparedStatement.executeBatch();
+                connection.commit();
+
+                String sqlUpdrate = "UPDATE forum SET posts = posts + ? WHERE slug = ?::citext;";
+                jdbcTmp.update(sqlUpdrate, listPosts.size(), thread.getForum());
+
+
+            } catch (DataIntegrityViolationException e) {
+                connection.rollback();
+                throw new DataIntegrityViolationException("error");
+            } catch (SQLException  e) {
+                connection.rollback();
+                throw new SQLException();
+            } finally {
+                connection.setAutoCommit(true);
             }
-
-            preparedStatement.executeBatch();
-
-            String sqlUpdrate = "UPDATE forum SET posts = posts + ? WHERE slug = ?::citext;";
-            jdbcTmp.update(sqlUpdrate, listPosts.size(), thread.getForum());
-
-
         } catch (DataIntegrityViolationException e) {
             throw new DataIntegrityViolationException("error");
         } catch (SQLException e) {
             throw new SQLException();
         }
-
-        return listPosts;
     }
 
 

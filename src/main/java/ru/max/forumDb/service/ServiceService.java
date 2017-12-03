@@ -1,12 +1,9 @@
 package ru.max.forumDb.service;
 
-
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 
-@Transactional
-@Repository
+@Service
 public class ServiceService {
 
     private final JdbcTemplate jdbcTmp;

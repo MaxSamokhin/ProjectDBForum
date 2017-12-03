@@ -85,26 +85,4 @@ public class UserModel {
     public void setAbout(String about) {
         this.about = about;
     }
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        UserModel userModel = (UserModel) o;
-
-        if (!nickname.equals(userModel.nickname)) return false;
-        if (!email.equals(userModel.email)) return false;
-        if (!fullname.equals(userModel.fullname)) return false;
-        return about.equals(userModel.about);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = nickname.hashCode();
-        result = 31 * result + email.hashCode();
-        result = 31 * result + fullname.hashCode();
-        result = 31 * result + about.hashCode();
-        return result;
-    }
-
 }

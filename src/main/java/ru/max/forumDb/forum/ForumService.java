@@ -3,15 +3,13 @@ package ru.max.forumDb.forum;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.stereotype.Service;
 import ru.max.forumDb.thread.ThreadModel;
 import ru.max.forumDb.user.UserModel;
 import ru.max.forumDb.user.UserService;
 
 
-@Transactional
-@Repository
+@Service
 public class ForumService {
 
     private final JdbcTemplate jdbcTmp;

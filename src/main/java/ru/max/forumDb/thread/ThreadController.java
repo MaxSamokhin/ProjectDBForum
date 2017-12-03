@@ -2,6 +2,7 @@ package ru.max.forumDb.thread;
 
 import org.json.JSONArray;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -42,10 +43,11 @@ public class ThreadController {
             }
 
             ThreadModel thread = threadService.getThreadIdOrSlug(id, slugOrId);
-            List<PostModel> posts = threadService.createPosts(thread, listPosts);
+
+            threadService.createPosts(thread, listPosts);
 
             final JSONArray result = new JSONArray();
-            for (PostModel pst : posts) {
+            for (PostModel pst : listPosts) {
                 result.put(pst.getJson());
             }
 
@@ -56,7 +58,8 @@ public class ThreadController {
 
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error.getJsonError().toString()); // 404
 
-        } catch (DataIntegrityViolationException | SQLException e) {
+        } catch (DuplicateKeyException | SQLException e) {
+
             Error error = new Error("message", "Can't find forum with slug2");
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(error.getJsonError().toString()); //409

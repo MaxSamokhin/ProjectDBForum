@@ -11,7 +11,7 @@ import java.time.ZonedDateTime;
 public class PostModel {
 
     private int id;
-    private int parent;
+    private Integer parent;
     private String nickname;
     private String message;
     private boolean isEdited;
@@ -58,7 +58,7 @@ public class PostModel {
         return id;
     }
 
-    public int getParent() {
+    public Integer getParent() {
         return parent;
     }
 
@@ -117,36 +117,6 @@ public class PostModel {
 
     public void setCreated(Timestamp created) {
         this.created = created;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        PostModel postModel = (PostModel) o;
-
-        if (id != postModel.id) return false;
-        if (parent != postModel.parent) return false;
-        if (nickname != postModel.nickname) return false;
-        if (isEdited != postModel.isEdited) return false;
-        if (threadId != postModel.threadId) return false;
-        if (!message.equals(postModel.message)) return false;
-        if (!forum.equals(postModel.forum)) return false;
-        return created.equals(postModel.created);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = id;
-        result = 31 * result + parent;
-        result = 31 * result + nickname.hashCode();
-        result = 31 * result + message.hashCode();
-        result = 31 * result + (isEdited ? 1 : 0);
-        result = 31 * result + forum.hashCode();
-        result = 31 * result + threadId;
-        result = 31 * result + created.hashCode();
-        return result;
     }
 
 }
