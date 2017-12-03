@@ -54,9 +54,9 @@ CREATE TABLE IF NOT EXISTS Users (
 
 
 CREATE UNIQUE INDEX IF NOT EXISTS user_nickname_index
-  ON Users (nickname);
+  ON Users (lower(nickname));
 CREATE UNIQUE INDEX IF NOT EXISTS user_email_index
-  ON Users (email);
+  ON Users (lower(email));
 
 
 CREATE TABLE IF NOT EXISTS Forum (
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS Forum (
 
 
 CREATE UNIQUE INDEX IF NOT EXISTS forum_slug_index
-  ON Forum (slug);
+  ON Forum (lower(slug));
 CREATE INDEX IF NOT EXISTS forum_user_id_index
   ON Forum (user_id);
 
@@ -92,7 +92,7 @@ CREATE INDEX IF NOT EXISTS thread_author_id_index
 CREATE INDEX IF NOT EXISTS thread_forum_id_index
   ON Thread (forum_id);
 CREATE UNIQUE INDEX IF NOT EXISTS thread_slug_index
-  ON Thread (slug);
+  ON Thread (lower(slug));
 CREATE INDEX thread_created_index
   ON Thread (created);
 CREATE INDEX thread_id_slug_index
@@ -136,6 +136,12 @@ CREATE INDEX IF NOT EXISTS post_id_thread_index
   ON posts (thread_id, id);
 CREATE INDEX IF NOT EXISTS post_created_id_index
   ON Posts (created, id);
+
+
+CREATE INDEX IF NOT EXISTS post_id_parent_thread_index
+  ON posts (id, parent, thread_id);
+CREATE INDEX IF NOT EXISTS post_id_forum_index
+  ON posts (id, forum_id);
 
 
 CREATE TABLE IF NOT EXISTS Forum_User (

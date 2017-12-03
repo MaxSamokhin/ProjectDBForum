@@ -35,7 +35,7 @@ public class ThreadService {
 
     public void createPosts(ThreadModel thread, List<PostModel> listPosts) throws SQLException {
         String sql = "insert into Posts (id, parent, author_id, message, forum_id, thread_id, created, path, nickname ) " +
-                "values (?, ?,(select Users.id from Users where Users.nickname=?::citext),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?)";
+                "values (?, ?,(select Users.id from Users where Users.nickname=?::citext),?,?,?,?, (SELECT path FROM posts WHERE id = ?) || ?, ?::citext)";
 
         Timestamp nowTime = Timestamp.valueOf(ZonedDateTime.now().toLocalDateTime());
 
@@ -55,21 +55,21 @@ public class ThreadService {
 
                 for (PostModel post : listPosts) {
 
-                if (post.getParent() != 0) {
-                    try {
-                        final List<PostModel> posts = jdbcTmp.query(
-                                "select Posts.id, Posts.parent, Posts.nickname, Posts.message, " +
-                                        " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
-                                        " from Forum " +
-                                        " join Posts on Posts.forum_id = Forum.id " +
-                                        " where Posts.id=? and Posts.thread_id=?", MAPPER_POST, post.getParent(), thread.getId());
-                        if (posts.isEmpty()) {
+                    if (post.getParent() != 0) {
+                        try {
+                            final List<PostModel> posts = jdbcTmp.query(
+                                    "select Posts.id, Posts.parent, Posts.nickname, Posts.message, " +
+                                            " Posts.is_edited, Forum.slug, Posts.thread_id, Posts.created " +
+                                            " from Forum " +
+                                            " join Posts on Posts.forum_id = Forum.id " +
+                                            " where Posts.id=? and Posts.thread_id=?", MAPPER_POST, post.getParent(), thread.getId());
+                            if (posts.isEmpty()) {
+                                throw new SQLException();
+                            }
+                        } catch (Exception e) {
                             throw new SQLException();
                         }
-                    } catch (Exception e) {
-                        throw new SQLException();
                     }
-                }
 
                     UserModel user = UserService.getUserInfo(post.getAuthor()); // ???
                     post.setId(jdbcTmp.queryForObject("SELECT nextval('posts_id_seq')", Integer.class));
@@ -106,7 +106,7 @@ public class ThreadService {
             } catch (DataIntegrityViolationException e) {
                 connection.rollback();
                 throw new DataIntegrityViolationException("error");
-            } catch (SQLException  e) {
+            } catch (SQLException e) {
                 connection.rollback();
                 throw new SQLException();
             } finally {

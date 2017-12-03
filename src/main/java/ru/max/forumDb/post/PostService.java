@@ -68,10 +68,9 @@ public class PostService {
 
     public PostModel update(int id, Message msg) {
 
-        String sqlFindPostById = "select Posts.id, Posts.parent, Users.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
+        String sqlFindPostById = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
                 "Posts.thread_id, Posts.created from Posts " +
                 "join Forum on Posts.forum_id = Forum.id " +
-                "join Users on Posts.author_id = Users.id " +
                 "where Posts.id=?;";
 
         String sqlUpdatePost = "update Posts set ( message, is_edited ) = (?, ?) " +
@@ -142,8 +141,8 @@ public class PostService {
         String sign = !desc ? ">" : "<";
 
         String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Forum " +
-                " join Posts on Posts.forum_id = Forum.id " +
+                "Posts.thread_id, Posts.created from Posts " +
+                " join Forum on Posts.forum_id = Forum.id " +
                 " where  Posts.thread_id = ? ";
 
         if (since != -1) {

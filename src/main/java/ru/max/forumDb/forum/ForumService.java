@@ -28,7 +28,7 @@ public class ForumService {
         forum.setPosts(0);
         forum.setThreads(0);
 
-        final String sql = "insert into Forum (title,slug, user_id, posts, threads) values (?, ?, ?, ?, ?) ;";
+        final String sql = "insert into Forum (title,slug, user_id, posts, threads) values (?, ?::citext, ?, ?, ?) ;";
 //        final String sqlFindIdUser = "select id from Users where lower(nickname) = lower(?) ;";
 //
 //
@@ -84,7 +84,7 @@ public class ForumService {
 //        }
 
         String sqlInsertIntoThread = "insert into thread (title, author_id, forum_id, message, created, slug) " +
-                "values (?,?,?,?,?,?)  RETURNING id;";
+                "values (?,?,?,?,?,?::citext)  RETURNING id;";
 
 
         String sqlUpdate = "UPDATE Forum SET threads = threads + 1 WHERE slug = ?::citext";

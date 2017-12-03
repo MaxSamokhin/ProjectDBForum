@@ -17,7 +17,7 @@ public class UserService {
 
     public UserModel createUser(String nickname, String fullname, String email, String about) {
         UserModel user = new UserModel(nickname, fullname, email, about);
-        jdbcTmp.update("insert into Users (nickname, fullname, email, about) values (?, ?, ?, ?)",
+        jdbcTmp.update("insert into Users (nickname, fullname, email, about) values (?::citext, ?, ?::citext, ?)",
                 user.getNickname(), user.getFullName(), user.getEmail(), user.getAbout());
 
         return user;
@@ -71,7 +71,7 @@ public class UserService {
             sql += " and lower( nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
         }
 
-        sql += " order by nickname::citext COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
+        sql += " order by nickname COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
 
         Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
 
