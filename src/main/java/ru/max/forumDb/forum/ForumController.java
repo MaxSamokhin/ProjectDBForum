@@ -39,7 +39,7 @@ public class ForumController {
 
         } catch (DuplicateKeyException e) {
 
-            ForumModel forum = (ForumModel) forumService.findBySlug(data.getSlug());
+            ForumModel forum = (ForumModel) forumService.getInfoAboutForum(data.getSlug());
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(forum.getJson().toString());
 

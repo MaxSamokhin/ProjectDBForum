@@ -93,6 +93,22 @@ public class PostService {
         return post;
     }
 
+//
+//    @Override
+//    public List<Post> getPostsParentTree(final Thread thread, final Boolean desc, final List<Integer> parents) {
+//        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
+//                "FROM posts p " +
+//                "JOIN forums f ON (f.id = p.forum_id) " +
+//                "WHERE p.__path[1] = ? AND p.thread_id = ? " +
+//                "ORDER BY __path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC") + ";";
+//
+//        List<Post> result = new ArrayList<>();
+//        for (Integer parent : parents) {
+//            result.addAll(template.query(SQL, POST_MAPPER, parent, thread.getId()));
+//        }
+//        return result;
+//    }
+
     public List<PostModel> getPostsParentTree(ThreadModel thread, int limit, int since, boolean desc) {
 
         String sqlSort = !desc ? "asc" : "desc";
@@ -165,6 +181,7 @@ public class PostService {
             rs.getInt("thread_id"),
             rs.getTimestamp("created")
     );
+
 
     public static final RowMapper<UserModel> MAPPER_USER = (rs, rowNum) -> new UserModel(
             rs.getInt("id"),

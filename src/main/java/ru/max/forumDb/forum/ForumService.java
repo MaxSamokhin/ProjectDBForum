@@ -40,14 +40,6 @@ public class ForumService {
         return forum;
     }
 
-    public Object findBySlug(String slug) {
-        final String sql = "select Forum.id, Forum.title, Forum.slug, Users.nickname, Forum.posts, Forum.threads " +
-                "from  Forum " +
-                "join Users on Forum.user_id = Users.id " +
-                "where slug = ?::citext;";
-
-        return jdbcTmp.queryForObject(sql, MAPPER_FORUM, slug);
-    }
 
     public ForumModel getInfoAboutForum(String slug) {
         final String sql = "select Forum.id, Forum.title, Forum.slug, Users.nickname, Forum.posts, Forum.threads " +

@@ -47,7 +47,7 @@ public class ThreadService {
 
 //            Connection connection = DataSourceUtils.getConnection(jdbcTmp.getDataSource());
 
-            ForumModel forum = (ForumModel) forumService.findBySlug(thread.getForum());  // ??
+            ForumModel forum = (ForumModel) forumService.getInfoAboutForum(thread.getForum());  // ??
 
 //            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
 

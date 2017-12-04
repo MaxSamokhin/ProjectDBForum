@@ -177,6 +177,7 @@ public class ThreadController {
             if (Objects.equals(sort, "parent_tree")) {
 
                 posts = postService.getPostsParentTree(thread, limit, since, desc);
+
                 final JSONArray result = new JSONArray();
                 for (PostModel pst : posts) {
                     result.put(pst.getJson());
