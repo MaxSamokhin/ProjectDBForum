@@ -68,10 +68,10 @@ public class UserService {
                 "where users.id in (select user_id from forum_user where forum_id= ?) ";
 
         if (since != null) {
-            sql += " and lower( nickname COLLATE \"ucs_basic\" )" + sign + " lower('" + since + "') COLLATE \"ucs_basic\" ";  // ::citext
+            sql += " and nickname" + sign + " '" + since + "'::citext";
         }
 
-        sql += " order by nickname COLLATE \"ucs_basic\" " + sqlSort + " limit ?;";
+        sql += " order by nickname " + sqlSort + " limit ?;"; // убрать collate
 
         Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
 

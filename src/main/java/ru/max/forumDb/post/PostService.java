@@ -57,7 +57,7 @@ public class PostService {
             jsonObject.put("thread", thread.getJson());
         }
 
-        if (related != null &&  related.contains("forum")) {
+        if (related != null && related.contains("forum")) {
             ForumModel forum = jdbcTmp.queryForObject(sqlFindForumById, MAPPER_FORUM, id);
 
             jsonObject.put("forum", forum.getJson());
@@ -78,7 +78,7 @@ public class PostService {
 
         PostModel post = jdbcTmp.queryForObject(sqlFindPostById, MAPPER_POST, id);
 
-        if(!post.getMessage().equals(msg.getMessage())) {
+        if (!post.getMessage().equals(msg.getMessage())) {
 
             if (msg.getMessage() != null) {
                 post.setEdited(true);
@@ -87,47 +87,60 @@ public class PostService {
 
             msg.setMessage(post.getMessage());
 
-            jdbcTmp.update(sqlUpdatePost, msg.getMessage(),post.isEdited(), id);
+            jdbcTmp.update(sqlUpdatePost, msg.getMessage(), post.isEdited(), id);
         }
 
         return post;
     }
 
-//
-//    @Override
-//    public List<Post> getPostsParentTree(final Thread thread, final Boolean desc, final List<Integer> parents) {
-//        final String SQL = "SELECT p.id, parent_id, f.slug, thread_id, __nickname, is_edited, p.message, p.created " +
-//                "FROM posts p " +
-//                "JOIN forums f ON (f.id = p.forum_id) " +
-//                "WHERE p.__path[1] = ? AND p.thread_id = ? " +
-//                "ORDER BY __path " + (desc ? "DESC" : "ASC") + ", p.id " + (desc ? "DESC" : "ASC") + ";";
-//
-//        List<Post> result = new ArrayList<>();
-//        for (Integer parent : parents) {
-//            result.addAll(template.query(SQL, POST_MAPPER, parent, thread.getId()));
-//        }
-//        return result;
-//    }
 
     public List<PostModel> getPostsParentTree(ThreadModel thread, int limit, int since, boolean desc) {
 
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
 
-        String sub = "with sub as (select path from posts where thread_id=? and parent=0 ";
+//        String sub = "with sub as (select path from posts where thread_id=? and parent=0 ";
+//
+//        if (since != -1) {
+//            sub += "and path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
+//        }
+//        sub += "order by  Posts.id " + sqlSort + " limit ?)";
+//
+//        String sql = sub + "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited," +
+//                " Forum.slug, Posts.thread_id, Posts.created from Posts " +
+//                " join Forum on Posts.forum_id = Forum.id " +
+//                " join sub on sub.path <@ Posts.path " +
+//                "order by Posts.path " + sqlSort;
+
+//        since = since == -1 ? 0 : since;
+
+        String sql_new2 = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, " +
+                " Forum.slug, Posts.thread_id, Posts.created from Posts " +
+                " join Forum on Posts.forum_id  = Forum.id " +
+                "  where thread_id = ? ";
+
+        boolean flag = true;
 
         if (since != -1) {
-            sub += "and path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
+            sql_new2 += " and path[1] in (select id " +
+                    "from Posts where thread_id = ? and parent = 0 and " +
+                    " path " + sign + " (select path " +
+                    " from Posts" +
+                    " where id = ?) " +
+                    " order by path " + sqlSort + ", thread_id " + sqlSort + "  limit ? ) ";
+        } else if (limit != -1) {
+            sql_new2 += " and path[1] in (select id  from Posts where   thread_id = ? and parent = 0" +
+                    " order by path " + sqlSort + ", thread_id " + sqlSort + " limit ? ) ";
+            flag = false;
         }
-        sub += "order by  Posts.id " + sqlSort + " limit ?)";
 
-        String sql = sub + "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited," +
-                " Forum.slug, Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id " +
-                " join sub on sub.path <@ Posts.path " +
-                "order by Posts.path " + sqlSort;
+        sql_new2 += "order by path "+sqlSort+" ,thread_id "+sqlSort+" ;";
 
-        return jdbcTmp.query(sql, MAPPER_POST, thread.getId(), limit);
+        if (flag) {
+            return jdbcTmp.query(sql_new2, MAPPER_POST, thread.getId(), thread.getId(), since, limit);
+        }
+        return jdbcTmp.query(sql_new2, MAPPER_POST, thread.getId(), thread.getId(), limit);
+
     }
 
 
@@ -168,7 +181,6 @@ public class PostService {
 
         return jdbcTmp.query(sql, MAPPER_POST, thread.getId(), limit);
     }
-
 
 
     public static final RowMapper<PostModel> MAPPER_POST = (rs, rowNum) -> new PostModel(
