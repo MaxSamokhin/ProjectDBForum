@@ -4,7 +4,6 @@ import org.json.JSONObject;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import ru.max.forumDb.Message;
 import ru.max.forumDb.forum.ForumModel;
 import ru.max.forumDb.thread.ThreadModel;
@@ -12,7 +11,6 @@ import ru.max.forumDb.user.UserModel;
 
 import java.util.List;
 
-@Transactional
 @Service
 public class PostService {
     private final JdbcTemplate jdbcTmp;
@@ -21,44 +19,24 @@ public class PostService {
         this.jdbcTmp = jdbcTmp;
     }
 
-    public JSONObject getInfoPosts(int id, String related) {
+    JSONObject getInfoPosts(int id, String related) {
+
         JSONObject jsonObject = new JSONObject();
-
-        String sqlFindPostById = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Posts " +
-                "join Forum on Posts.forum_id = Forum.id " +
-                "where Posts.id=?;";
-        String sqlFindUserById = "select distinct Users.id, Users.nickname, Users.fullname, Users.email, Users.about " +
-                "from Posts join Users on Posts.author_id = Users.id " +
-                "where Posts.id=?;";
-        String sqlFindForumById = "select Forum.id, Forum.title, Forum.slug, Users.nickname, Forum.posts, Forum.threads " +
-                "from Posts " +
-                "join Forum on Posts.forum_id = Forum.id " +
-                "join Users on Forum.user_id = Users.id " +
-                "where Posts.id=?;";
-        String sqlFindThreadById = "select Thread.id, Thread.title, Users.nickname, Forum.slug as f_slug, Thread.message, " +
-                "Thread.votes, Thread.slug as t_slug, Thread.created from Thread " +
-                "join Forum on Thread.forum_id = Forum.id " +
-                "join Users on Thread.author_id = Users.id " +
-                "join Posts on Posts.thread_id = Thread.id " +
-                "where Posts.id=?;";
-
-        PostModel post = jdbcTmp.queryForObject(sqlFindPostById, MAPPER_POST, id);
-
+        PostModel post = jdbcTmp.queryForObject(PostRequest.findPostById, MAPPER_POST, id);
         jsonObject.put("post", post.getJson());
 
         if (related != null && related.contains("user")) {
-            UserModel user = jdbcTmp.queryForObject(sqlFindUserById, MAPPER_USER, id);
+            UserModel user = jdbcTmp.queryForObject(PostRequest.findUserById, MAPPER_USER, id);
             jsonObject.put("author", user.getJsonWithoutId());
         }
 
         if (related != null && related.contains("thread")) {
-            ThreadModel thread = jdbcTmp.queryForObject(sqlFindThreadById, MAPPER_THREAD, id);
+            ThreadModel thread = jdbcTmp.queryForObject(PostRequest.findThreadById, MAPPER_THREAD, id);
             jsonObject.put("thread", thread.getJson());
         }
 
         if (related != null && related.contains("forum")) {
-            ForumModel forum = jdbcTmp.queryForObject(sqlFindForumById, MAPPER_FORUM, id);
+            ForumModel forum = jdbcTmp.queryForObject(PostRequest.findForumById, MAPPER_FORUM, id);
 
             jsonObject.put("forum", forum.getJson());
         }
@@ -68,15 +46,7 @@ public class PostService {
 
     public PostModel update(int id, Message msg) {
 
-        String sqlFindPostById = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Posts " +
-                "join Forum on Posts.forum_id = Forum.id " +
-                "where Posts.id=?;";
-
-        String sqlUpdatePost = "update Posts set ( message, is_edited ) = (?, ?) " +
-                "where Posts.id=?";
-
-        PostModel post = jdbcTmp.queryForObject(sqlFindPostById, MAPPER_POST, id);
+         PostModel post = jdbcTmp.queryForObject(PostRequest.findPostById, MAPPER_POST, id);
 
         if (!post.getMessage().equals(msg.getMessage())) {
 
@@ -87,7 +57,7 @@ public class PostService {
 
             msg.setMessage(post.getMessage());
 
-            jdbcTmp.update(sqlUpdatePost, msg.getMessage(), post.isEdited(), id);
+            jdbcTmp.update(PostRequest.updatePost, msg.getMessage(), post.isEdited(), id);
         }
 
         return post;
@@ -98,21 +68,6 @@ public class PostService {
 
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
-
-//        String sub = "with sub as (select path from posts where thread_id=? and parent=0 ";
-//
-//        if (since != -1) {
-//            sub += "and path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
-//        }
-//        sub += "order by  Posts.id " + sqlSort + " limit ?)";
-//
-//        String sql = sub + "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited," +
-//                " Forum.slug, Posts.thread_id, Posts.created from Posts " +
-//                " join Forum on Posts.forum_id = Forum.id " +
-//                " join sub on sub.path <@ Posts.path " +
-//                "order by Posts.path " + sqlSort;
-
-//        since = since == -1 ? 0 : since;
 
         String sql_new2 = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, " +
                 " Forum.slug, Posts.thread_id, Posts.created from Posts " +
@@ -149,17 +104,7 @@ public class PostService {
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
 
-        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Forum " +
-                " join Posts on Posts.forum_id = Forum.id ";
-        if (since != -1) {
-            sql += " where (Posts.thread_id = ? and Posts.id " + sign + " " + since + " ) ";
-        } else {
-            sql += "where Posts.thread_id = ? ";
-        }
-        sql += "order by  Posts.created " + sqlSort + ",  Posts.id  " + sqlSort + " limit ? ;";
-
-        return jdbcTmp.query(sql, MAPPER_POST, thread.getId(), limit);
+        return jdbcTmp.query(PostRequest.flatSort(since,sign,sqlSort), MAPPER_POST, thread.getId(), limit);
 
     }
 
@@ -169,21 +114,11 @@ public class PostService {
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
 
-        String sql = "select Posts.id, Posts.parent, Posts.nickname, Posts.message, Posts.is_edited, Forum.slug, " +
-                "Posts.thread_id, Posts.created from Posts " +
-                " join Forum on Posts.forum_id = Forum.id " +
-                " where  Posts.thread_id = ? ";
-
-        if (since != -1) {
-            sql += " and Posts.path " + sign + " (select Posts.path from Posts where Posts.id = " + since + ") ";
-        }
-        sql += "order by  Posts.path " + sqlSort + ", Posts.id " + sqlSort + " limit ? ;";
-
-        return jdbcTmp.query(sql, MAPPER_POST, thread.getId(), limit);
+        return jdbcTmp.query(PostRequest.treeSort(since,sign,sqlSort), MAPPER_POST, thread.getId(), limit);
     }
 
 
-    public static final RowMapper<PostModel> MAPPER_POST = (rs, rowNum) -> new PostModel(
+    private static final RowMapper<PostModel> MAPPER_POST = (rs, rowNum) -> new PostModel(
             rs.getInt("id"),
             rs.getInt("parent"),
             rs.getString("nickname"),
@@ -195,7 +130,7 @@ public class PostService {
     );
 
 
-    public static final RowMapper<UserModel> MAPPER_USER = (rs, rowNum) -> new UserModel(
+    private static final RowMapper<UserModel> MAPPER_USER = (rs, rowNum) -> new UserModel(
             rs.getInt("id"),
             rs.getString("nickname"),
             rs.getString("email"),
@@ -203,7 +138,7 @@ public class PostService {
             rs.getString("about")
     );
 
-    public static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
+    private static final RowMapper<ThreadModel> MAPPER_THREAD = (rs, rowNum) -> new ThreadModel(
             rs.getInt("id"),
             rs.getString("title"),
             rs.getString("nickname"),
@@ -214,7 +149,7 @@ public class PostService {
             rs.getTimestamp("created")
     );
 
-    public static final RowMapper<ForumModel> MAPPER_FORUM = (rs, rowNum) -> new ForumModel(
+    private static final RowMapper<ForumModel> MAPPER_FORUM = (rs, rowNum) -> new ForumModel(
             rs.getLong("id"),
             rs.getString("title"),
             rs.getString("slug"),

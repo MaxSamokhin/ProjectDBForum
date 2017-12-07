@@ -51,13 +51,13 @@ CREATE TABLE IF NOT EXISTS Posts (
   id        SERIAL PRIMARY KEY,
   parent    INTEGER NOT NULL         DEFAULT 0,
   author_id INTEGER NOT NULL REFERENCES Users (id),
+  nickname  CITEXT  NOT NULL,
   message   TEXT    NOT NULL,
   is_edited BOOLEAN                  DEFAULT FALSE,
   forum_id  INTEGER NOT NULL REFERENCES Forum (id),
   thread_id INTEGER NOT NULL REFERENCES Thread (id),
   created   TIMESTAMPTZ(6)           DEFAULT now(),
-  path      INTEGER [],
-  nickname  CITEXT  NOT NULL
+  path      INTEGER []
 );
 
 

@@ -85,4 +85,28 @@ public class UserModel {
     public void setAbout(String about) {
         this.about = about;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        UserModel userModel = (UserModel) o;
+
+        if (id != userModel.id) return false;
+        if (nickname != null ? !nickname.equals(userModel.nickname) : userModel.nickname != null) return false;
+        if (email != null ? !email.equals(userModel.email) : userModel.email != null) return false;
+        if (fullname != null ? !fullname.equals(userModel.fullname) : userModel.fullname != null) return false;
+        return about != null ? about.equals(userModel.about) : userModel.about == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (nickname != null ? nickname.hashCode() : 0);
+        result = 31 * result + (email != null ? email.hashCode() : 0);
+        result = 31 * result + (fullname != null ? fullname.hashCode() : 0);
+        result = 31 * result + (about != null ? about.hashCode() : 0);
+        return result;
+    }
 }

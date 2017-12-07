@@ -12,31 +12,24 @@ public class UserService {
     private static JdbcTemplate jdbcTmp = null;
 
     public UserService(JdbcTemplate template) {
-        this.jdbcTmp = template;
+        jdbcTmp = template;
     }
 
-    public UserModel createUser(String nickname, String fullname, String email, String about) {
+    UserModel createUser(String nickname, String fullname, String email, String about) {
         UserModel user = new UserModel(nickname, fullname, email, about);
-        jdbcTmp.update("insert into Users (nickname, fullname, email, about) values (?::citext, ?, ?::citext, ?)",
-                user.getNickname(), user.getFullName(), user.getEmail(), user.getAbout());
-
+        jdbcTmp.update(UserRequest.insertUser, user.getNickname(), user.getFullName(), user.getEmail(), user.getAbout());
         return user;
     }
 
-    public List<UserModel> findUsers(String nickname, String email) {
-        final String sql = "select nickname, fullname, email, about from Users where nickname = ?::citext or email = ?::citext ";
-
-        return jdbcTmp.query(sql, MAPPER_USER_WITHOUT_ID, nickname, email);
+    List<UserModel> findUsers(String nickname, String email) {
+        return jdbcTmp.query(UserRequest.selectByNicknameOrEmail, MAPPER_USER_WITHOUT_ID, nickname, email);
     }
 
     public static UserModel getUserInfo(String nickname) {
-        final String sql = "select id, nickname, fullname, about, email from Users where nickname = ?::citext ;";
-        return jdbcTmp.queryForObject(sql, MAPPER_USER, nickname);
+        return jdbcTmp.queryForObject(UserRequest.selectByNickname, MAPPER_USER, nickname);
     }
 
-    public UserModel correctUserProfile(String nickname, UpdateDataUser updateData) {
-        final String sql = "update Users set fullname = ?, about = ?, email = ? where nickname = ?::citext returning *;";
-
+    UserModel correctUserProfile(String nickname, UpdateDataUser updateData) {
         final UserModel upUser = getUserInfo(nickname);
 
         if (updateData.getAbout() != null) {
@@ -51,8 +44,7 @@ public class UserService {
             upUser.setFullname(updateData.getFullname());
         }
 
-
-        return jdbcTmp.queryForObject(sql, MAPPER_USER_WITHOUT_ID,
+        return jdbcTmp.queryForObject(UserRequest.updateByNickname, MAPPER_USER_WITHOUT_ID,
                 upUser.getFullname(), upUser.getAbout(), upUser.getEmail(), nickname);
     }
 
@@ -62,24 +54,13 @@ public class UserService {
         String sqlSort = !desc ? "asc" : "desc";
         String sign = !desc ? ">" : "<";
 
-        final String sqlFindForumId = "select Forum.id from Forum where Forum.slug = ?::citext ;";
+        Long forId = jdbcTmp.queryForObject(UserRequest.selectIdForumBySlug, Long.class, slug);
 
-        String sql = "select id, nickname, fullname, about, email from users " +
-                "where users.id in (select user_id from forum_user where forum_id= ?) ";
-
-        if (since != null) {
-            sql += " and nickname" + sign + " '" + since + "'::citext";
-        }
-
-        sql += " order by nickname " + sqlSort + " limit ?;"; // убрать collate
-
-        Long forId = jdbcTmp.queryForObject(sqlFindForumId, Long.class, slug);
-
-        return jdbcTmp.query(sql, MAPPER_USER, forId, limit);
+        return jdbcTmp.query(UserRequest.getUsers(since,sign,sqlSort), MAPPER_USER, forId, limit);
     }
 
 
-    public static final RowMapper<UserModel> MAPPER_USER = (rs, rowNum) -> new UserModel(
+    private static final RowMapper<UserModel> MAPPER_USER = (rs, rowNum) -> new UserModel(
             rs.getInt("id"),
             rs.getString("nickname"),
             rs.getString("email"),
@@ -87,7 +68,7 @@ public class UserService {
             rs.getString("about")
     );
 
-    public static final RowMapper<UserModel> MAPPER_USER_WITHOUT_ID = (rs, rowNum) -> new UserModel(
+    private static final RowMapper<UserModel> MAPPER_USER_WITHOUT_ID = (rs, rowNum) -> new UserModel(
             rs.getString("nickname"),
             rs.getString("fullname"),
             rs.getString("email"),

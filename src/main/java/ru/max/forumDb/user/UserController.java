@@ -1,10 +1,6 @@
 package ru.max.forumDb.user;
 
-import com.sun.org.apache.regexp.internal.RE;
-import jdk.nashorn.api.scripting.JSObject;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -12,15 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import ru.max.forumDb.Error;
-import ru.max.forumDb.user.UserModel;
-import ru.max.forumDb.user.UserService;
 
-import javax.jws.soap.SOAPBinding;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.function.Consumer;
 
 @RestController
 @RequestMapping(path = "api/user")
@@ -57,7 +46,7 @@ public class UserController {
     @GetMapping("/{nickname}/profile")
     public ResponseEntity<?> getUserInfo(@PathVariable(value = "nickname") String nickname) {
         try {
-            final UserModel user = userService.getUserInfo(nickname);
+            final UserModel user = UserService.getUserInfo(nickname);
 
             return ResponseEntity.status(HttpStatus.OK).body(user.getJsonWithoutId().toString());
 

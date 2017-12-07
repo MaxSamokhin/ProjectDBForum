@@ -19,7 +19,8 @@ public class PostController {
     }
 
     @GetMapping("/{id}/details")
-    public ResponseEntity<?> getInfoThread(@PathVariable(value = "id") int id,  @RequestParam( name = "related", required = false ) String related ) {
+    public ResponseEntity<?> getInfoThread(@PathVariable(value = "id") int id,
+                                           @RequestParam(name = "related", required = false) String related) {
         try {
 
             JSONObject infoPost = postService.getInfoPosts(id, related);

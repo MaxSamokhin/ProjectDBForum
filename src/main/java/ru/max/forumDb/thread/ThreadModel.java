@@ -138,5 +138,33 @@ public class ThreadModel {
         this.created = created;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
 
+        ThreadModel that = (ThreadModel) o;
+
+        if (id != that.id) return false;
+        if (votes != that.votes) return false;
+        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+        if (author != null ? !author.equals(that.author) : that.author != null) return false;
+        if (forum != null ? !forum.equals(that.forum) : that.forum != null) return false;
+        if (message != null ? !message.equals(that.message) : that.message != null) return false;
+        if (slug != null ? !slug.equals(that.slug) : that.slug != null) return false;
+        return created != null ? created.equals(that.created) : that.created == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (title != null ? title.hashCode() : 0);
+        result = 31 * result + (author != null ? author.hashCode() : 0);
+        result = 31 * result + (forum != null ? forum.hashCode() : 0);
+        result = 31 * result + (message != null ? message.hashCode() : 0);
+        result = 31 * result + votes;
+        result = 31 * result + (slug != null ? slug.hashCode() : 0);
+        result = 31 * result + (created != null ? created.hashCode() : 0);
+        return result;
+    }
 }

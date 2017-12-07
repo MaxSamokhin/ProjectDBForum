@@ -119,4 +119,33 @@ public class PostModel {
         this.created = created;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        PostModel postModel = (PostModel) o;
+
+        if (id != postModel.id) return false;
+        if (isEdited != postModel.isEdited) return false;
+        if (threadId != postModel.threadId) return false;
+        if (parent != null ? !parent.equals(postModel.parent) : postModel.parent != null) return false;
+        if (nickname != null ? !nickname.equals(postModel.nickname) : postModel.nickname != null) return false;
+        if (message != null ? !message.equals(postModel.message) : postModel.message != null) return false;
+        if (forum != null ? !forum.equals(postModel.forum) : postModel.forum != null) return false;
+        return created != null ? created.equals(postModel.created) : postModel.created == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = id;
+        result = 31 * result + (parent != null ? parent.hashCode() : 0);
+        result = 31 * result + (nickname != null ? nickname.hashCode() : 0);
+        result = 31 * result + (message != null ? message.hashCode() : 0);
+        result = 31 * result + (isEdited ? 1 : 0);
+        result = 31 * result + (forum != null ? forum.hashCode() : 0);
+        result = 31 * result + threadId;
+        result = 31 * result + (created != null ? created.hashCode() : 0);
+        return result;
+    }
 }

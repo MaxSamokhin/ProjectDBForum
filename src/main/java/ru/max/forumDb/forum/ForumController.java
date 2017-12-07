@@ -7,7 +7,6 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import ru.max.forumDb.Error;
 import ru.max.forumDb.thread.ThreadModel;
 import ru.max.forumDb.thread.ThreadService;
@@ -64,19 +63,20 @@ public class ForumController {
     }
 
     @PostMapping("/{slug}/create")
-    public ResponseEntity<?> createThread(@PathVariable(value = "slug") String slug,  @RequestBody ThreadModel thread) {
+    public ResponseEntity<?> createThread(@PathVariable(value = "slug") String slug,
+                                          @RequestBody ThreadModel thread) {
         try {
             ThreadModel newThread = forumService.createThread(thread, slug);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(newThread.getJson().toString());
 
-        }  catch (DuplicateKeyException e) {
+        } catch (DuplicateKeyException e) {
 
             ThreadModel newThread = threadService.getThread(thread.getSlug());
 
             return ResponseEntity.status(HttpStatus.CONFLICT).body(newThread.getJson().toString());
 
-        }  catch (EmptyResultDataAccessException e) {
+        } catch (EmptyResultDataAccessException e) {
             Error error = new Error("message", "Can't find user forum or thread");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error.getJsonError().toString()); // 404
         }

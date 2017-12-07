@@ -12,30 +12,17 @@ public class ServiceService {
         this.jdbcTmp = jdbcTmp;
     }
 
-    public void clear() {
-        String sql = "TRUNCATE Forum CASCADE; " +
-                "TRUNCATE Posts CASCADE; " +
-                "TRUNCATE Thread CASCADE; " +
-                "TRUNCATE Users CASCADE; " +
-                "TRUNCATE Vote CASCADE; " +
-                "TRUNCATE Forum_User CASCADE; ";
-
-        jdbcTmp.update(sql);
-
+    void clear() {
+        jdbcTmp.update(ServiceRequest.truncateAll);
     }
 
-    public SeviceModel status() {
-
-        String sqlCountUsers = "select count(*) from Users";
-        String sqlCountForum = "select count(*) from Forum";
-        String sqlCountThread = "select count(*) from Thread";
-        String sqlCountPosts = "select count(*) from Posts";
+    SeviceModel status() {
 
         return new SeviceModel(
-                jdbcTmp.queryForObject(sqlCountUsers, Integer.class),
-                jdbcTmp.queryForObject(sqlCountForum, Integer.class),
-                jdbcTmp.queryForObject(sqlCountThread, Integer.class),
-                jdbcTmp.queryForObject(sqlCountPosts, Integer.class));
+                jdbcTmp.queryForObject(ServiceRequest.countUsers, Integer.class),
+                jdbcTmp.queryForObject(ServiceRequest.countForum, Integer.class),
+                jdbcTmp.queryForObject(ServiceRequest.countThread, Integer.class),
+                jdbcTmp.queryForObject(ServiceRequest.countPosts, Integer.class));
     }
 }
 

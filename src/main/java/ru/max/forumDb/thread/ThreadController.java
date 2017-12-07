@@ -1,7 +1,6 @@
 package ru.max.forumDb.thread;
 
 import org.json.JSONArray;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.http.HttpStatus;
@@ -22,17 +21,16 @@ import java.util.Objects;
 public class ThreadController {
 
     private final ThreadService threadService;
-    private final ForumService forumService;
     private final PostService postService;
 
-    public ThreadController(ThreadService threadService, ForumService forumService, PostService postService) {
+    public ThreadController(ThreadService threadService, PostService postService) {
         this.threadService = threadService;
-        this.forumService = forumService;
         this.postService = postService;
     }
 
     @PostMapping("/{slug_or_id}/create")
-    public ResponseEntity<?> createNewPost(@PathVariable(value = "slug_or_id") String slugOrId, @RequestBody List<PostModel> listPosts) {
+    public ResponseEntity<?> createNewPost(@PathVariable(value = "slug_or_id") String slugOrId,
+                                           @RequestBody List<PostModel> listPosts) {
         try {
 
             Boolean isId = true;
@@ -72,15 +70,15 @@ public class ThreadController {
 
         try {
 
-        Boolean isId = true;
-        int id = 0;
-        try {
-            id = Integer.parseInt(slugOrId);
-        } catch (Exception e) {
-        }
+            Boolean isId = true;
+            int id = 0;
+            try {
+                id = Integer.parseInt(slugOrId);
+            } catch (Exception e) {
+            }
 
-        ThreadModel thread = threadService.getThreadIdOrSlug(id, slugOrId);
-        return ResponseEntity.status(HttpStatus.OK).body(thread.getJson().toString());
+            ThreadModel thread = threadService.getThreadIdOrSlug(id, slugOrId);
+            return ResponseEntity.status(HttpStatus.OK).body(thread.getJson().toString());
 
         } catch (EmptyResultDataAccessException e) {
             Error error = new Error("message", "Can't find forum with slug");
@@ -91,7 +89,8 @@ public class ThreadController {
     }
 
     @PostMapping("{slug_or_id}/details")
-    public ResponseEntity<?> updateThread(@PathVariable(value = "slug_or_id") String slugOrId, @RequestBody ThreadModel threadInfo) {
+    public ResponseEntity<?> updateThread(@PathVariable(value = "slug_or_id") String slugOrId,
+                                          @RequestBody ThreadModel threadInfo) {
 
 //        Boolean isId = true;
 //        int id = 0;
@@ -197,7 +196,8 @@ public class ThreadController {
     }
 
     @PostMapping("{slug_or_id}/vote")
-    public ResponseEntity<?> voteThreads(@PathVariable(value = "slug_or_id") String slugOrId, @RequestBody VoteModel vote) {
+    public ResponseEntity<?> voteThreads(@PathVariable(value = "slug_or_id") String slugOrId,
+                                         @RequestBody VoteModel vote) {
         try {
 
             Boolean isId = true;

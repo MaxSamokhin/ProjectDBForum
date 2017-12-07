@@ -9,6 +9,7 @@ public class SeviceModel {
     private int thread;
     private int post;
 
+
     public SeviceModel(int user, int forum, int thread, int post) {
         this.user = user;
         this.forum = forum;
@@ -58,4 +59,25 @@ public class SeviceModel {
         this.post = post;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SeviceModel that = (SeviceModel) o;
+
+        if (user != that.user) return false;
+        if (forum != that.forum) return false;
+        if (thread != that.thread) return false;
+        return post == that.post;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = user;
+        result = 31 * result + forum;
+        result = 31 * result + thread;
+        result = 31 * result + post;
+        return result;
+    }
 }
