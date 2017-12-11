@@ -21,4 +21,7 @@ class ForumRequest {
             " set threads = threads + 1 " +
             " where slug = ?::citext";
 
+    static final String insertIntoForumUsers = "insert into forum_user (user_id, forum_id) " +
+            " values (?, ?)";
+
 }

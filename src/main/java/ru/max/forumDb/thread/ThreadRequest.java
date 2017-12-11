@@ -74,6 +74,8 @@ class ThreadRequest {
             "from Forum " +
             "where Forum.slug = ?::citext;";
 
+    static final String insertIntoForumUsers = "insert into forum_user (user_id, forum_id) " +
+            " values (?, ?)";
 
     @Contract(pure = true)
     static String getThreadsForum(String since, String sign, String sqlSort, int limit) {

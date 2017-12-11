@@ -80,13 +80,15 @@ public class ThreadService {
                     preparedStatement.setInt(9, post.getId());
                     preparedStatement.setString(10, post.getAuthor());
 
+
+                    jdbcTmp.update(ThreadRequest.insertIntoForumUsers, user.getId(), forum.getId());
+
                     preparedStatement.addBatch();
                 }
                 preparedStatement.executeBatch();
                 connection.commit();
 
-                String sqlUpdate = ThreadRequest.updateForum;
-                jdbcTmp.update(sqlUpdate, listPosts.size(), thread.getForum());
+                jdbcTmp.update(ThreadRequest.updateForum, listPosts.size(), thread.getForum());
 
 
             } catch (DataIntegrityViolationException e) {
@@ -185,6 +187,7 @@ public class ThreadService {
             rs.getString("t_slug"),
             rs.getTimestamp("created")
     );
+
     private static final RowMapper<PostModel> MAPPER_POST = (rs, rowNum) -> new PostModel(
             rs.getInt("id"),
             rs.getInt("parent"),

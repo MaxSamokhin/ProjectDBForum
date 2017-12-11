@@ -39,9 +39,7 @@ public class ForumService {
 
     ThreadModel createThread(ThreadModel threadUpdrate, String slug) {
 
-
         ForumModel forum = jdbcTmp.queryForObject(ForumRequest.findForumBySlug, MAPPER_FORUM, slug);
-
         if (forum == null) {
             throw new EmptyResultDataAccessException(1);
         }
@@ -53,7 +51,7 @@ public class ForumService {
         threadUpdrate.setId(jdbcTmp.queryForObject(ForumRequest.insertIntoThread, Integer.class, threadUpdrate.getTitle(), user.getId(),
                 forum.getId(), threadUpdrate.getMessage(), threadUpdrate.getCreated(), threadUpdrate.getSlug()));
 
-
+        jdbcTmp.update(ForumRequest.insertIntoForumUsers, user.getId(), forum.getId());
         jdbcTmp.update(ForumRequest.updateForum, forum.getSlug());
 
         return threadUpdrate;

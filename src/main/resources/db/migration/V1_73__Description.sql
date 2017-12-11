@@ -10,12 +10,6 @@ DROP TABLE IF EXISTS Votes CASCADE;
 DROP TABLE IF EXISTS Forum_User CASCADE;
 
 
-DROP TRIGGER IF EXISTS trigger_post
-ON Thread;
-DROP TRIGGER IF EXISTS trigger_thread
-ON Posts;
-
-
 CREATE TABLE IF NOT EXISTS Users (
   id       SERIAL PRIMARY KEY,
   nickname CITEXT  COLLATE ucs_basic  NOT NULL UNIQUE,
@@ -65,27 +59,6 @@ CREATE TABLE IF NOT EXISTS Forum_User (
   user_id  INTEGER REFERENCES Users (id),
   forum_id INTEGER REFERENCES Forum (id)
 );
-
-
-CREATE OR REPLACE FUNCTION forum_user()
-  RETURNS TRIGGER AS $forum_user$
-
-BEGIN
-  INSERT INTO Forum_User (user_id, forum_id) VALUES (NEW.author_id, NEW.forum_id);
-  RETURN NULL;
-END;
-
-$forum_user$ LANGUAGE plpgsql;
-
-
-CREATE TRIGGER trigger_thread
-AFTER INSERT ON Thread
-FOR EACH ROW EXECUTE PROCEDURE forum_user();
-
-
-CREATE TRIGGER trigger_post
-AFTER INSERT ON Posts
-FOR EACH ROW EXECUTE PROCEDURE forum_user();
 
 
 CREATE TABLE IF NOT EXISTS Vote (
